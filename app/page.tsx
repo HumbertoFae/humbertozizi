@@ -42,6 +42,10 @@ const translations = {
     ideasCode: "ideias",
     evolving: "em evolução",
     portraitLoading: "carregando retrato_",
+    terminalRunning: "executando",
+    terminalComplete: "concluído",
+    terminalGenerating: "gerando retrato",
+    terminalLine: "linha",
     previews: "Prévias dos projetos",
     run: "executar",
     visualEditor: "EDITOR VISUAL / 01",
@@ -110,6 +114,10 @@ const translations = {
     ideasCode: "ideas",
     evolving: "evolving",
     portraitLoading: "loading portrait_",
+    terminalRunning: "running",
+    terminalComplete: "complete",
+    terminalGenerating: "generating portrait",
+    terminalLine: "line",
     previews: "Project previews",
     run: "run",
     visualEditor: "VISUAL EDITOR / 01",
@@ -156,6 +164,8 @@ const translations = {
 } as const;
 
 type Translation = (typeof translations)[Language];
+
+const asciiCommand = 'const self = "Humberto Zizi"; render(self);';
 
 const navItems = [
   { id: "inicio", file: "README.md", icon: "#" },
@@ -312,12 +322,17 @@ export default function Home() {
   const [activeSection, setActiveSection] = useState("inicio");
   const [menuOpen, setMenuOpen] = useState(false);
   const [asciiArt, setAsciiArt] = useState("");
+  const [typedAsciiCommand, setTypedAsciiCommand] = useState("");
+  const [revealedAsciiLines, setRevealedAsciiLines] = useState(0);
   const [language, setLanguage] = useState<Language>("pt");
   const timelineRef = useRef<HTMLElement>(null);
   const asciiFrameRef = useRef<HTMLDivElement>(null);
   const asciiPreRef = useRef<HTMLPreElement>(null);
   const t = translations[language];
   const localizedProjects = projects[language];
+  const asciiLineCount = asciiArt ? asciiArt.replace(/\n$/, "").split("\n").length : 0;
+  const asciiRenderComplete = asciiLineCount > 0 && revealedAsciiLines >= asciiLineCount;
+  const asciiRevealPercent = asciiLineCount ? (revealedAsciiLines / asciiLineCount) * 100 : 0;
 
   const chooseLanguage = (nextLanguage: Language) => {
     setLanguage(nextLanguage);
@@ -399,6 +414,46 @@ export default function Home() {
       if (animationFrame) window.cancelAnimationFrame(animationFrame);
     };
   }, [asciiArt]);
+
+  useEffect(() => {
+    if (!asciiArt || !asciiLineCount) return;
+
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reducedMotion) {
+      setTypedAsciiCommand(asciiCommand);
+      setRevealedAsciiLines(asciiLineCount);
+      return;
+    }
+
+    const characterDuration = 32;
+    const lineDuration = 26;
+    const pauseAfterCommand = 260;
+    const commandDuration = asciiCommand.length * characterDuration;
+    const totalDuration = commandDuration + pauseAfterCommand + asciiLineCount * lineDuration;
+    let animationFrame = 0;
+    let startedAt = 0;
+
+    const animateConsole = (time: number) => {
+      if (!startedAt) startedAt = time;
+      const elapsed = time - startedAt;
+      const visibleCharacters = Math.min(asciiCommand.length, Math.floor(elapsed / characterDuration));
+      setTypedAsciiCommand(asciiCommand.slice(0, visibleCharacters));
+
+      const renderElapsed = elapsed - commandDuration - pauseAfterCommand;
+      if (renderElapsed >= 0) {
+        setRevealedAsciiLines(Math.min(asciiLineCount, Math.floor(renderElapsed / lineDuration) + 1));
+      }
+
+      if (elapsed < totalDuration) animationFrame = window.requestAnimationFrame(animateConsole);
+      else {
+        setTypedAsciiCommand(asciiCommand);
+        setRevealedAsciiLines(asciiLineCount);
+      }
+    };
+
+    animationFrame = window.requestAnimationFrame(animateConsole);
+    return () => window.cancelAnimationFrame(animationFrame);
+  }, [asciiArt, asciiLineCount]);
 
   useEffect(() => {
     document.documentElement.classList.add("motion-ready");
@@ -554,9 +609,25 @@ export default function Home() {
                   </div>
                 </div>
                 <div className="ascii-portrait hero-enter enter-three" aria-hidden="true">
-                  <code className="ascii-label"><b>const</b> self = <em>&quot;Humberto Zizi&quot;</em>;<span className="ascii-cursor" /></code>
+                  <div className="ascii-terminal-bar">
+                    <span className="terminal-lights"><i /><i /><i /></span>
+                    <code>self_portrait.console</code>
+                    <em>{asciiRenderComplete ? t.terminalComplete : t.terminalRunning}</em>
+                  </div>
+                  <div className="ascii-command">
+                    <span>›</span><code>{typedAsciiCommand}</code><i className="ascii-cursor" />
+                  </div>
                   <div className="ascii-art-frame" ref={asciiFrameRef}>
-                    {asciiArt ? <pre ref={asciiPreRef}>{asciiArt}</pre> : <span className="ascii-loading">{t.portraitLoading}</span>}
+                    {asciiArt ? (
+                      <div className="ascii-reveal" style={{ clipPath: `inset(0 0 ${100 - asciiRevealPercent}% 0)` }}>
+                        <pre ref={asciiPreRef}>{asciiArt}</pre>
+                      </div>
+                    ) : <span className="ascii-loading">{t.portraitLoading}</span>}
+                    {!asciiRenderComplete && revealedAsciiLines > 0 ? <i className="ascii-scan-line" style={{ top: `${asciiRevealPercent}%` }} /> : null}
+                  </div>
+                  <div className="ascii-terminal-status">
+                    <span>{t.terminalLine} {String(revealedAsciiLines).padStart(3, "0")}/{String(asciiLineCount).padStart(3, "0")}</span>
+                    <em>{asciiRenderComplete ? t.terminalComplete : `${t.terminalGenerating}...`}</em>
                   </div>
                 </div>
               </article>

@@ -70,7 +70,12 @@ test("ships and safely contains the supplied ASCII self portrait", async () => {
   assert.equal(lines.length, 100);
   assert.equal(Math.max(...lines.map((line) => line.length)), 200);
   assert.match(page, /fetch\("\/ascii-art\.txt"\)/);
-  assert.match(page, /<code className="ascii-label"><b>const<\/b> self = <em>&quot;Humberto Zizi&quot;<\/em>;<span className="ascii-cursor" \/><\/code>/);
+  assert.match(page, /const asciiCommand = 'const self = "Humberto Zizi"; render\(self\);'/);
+  assert.match(page, /const lineDuration = 26/);
+  assert.match(page, /requestAnimationFrame\(animateConsole\)/);
+  assert.match(page, /setRevealedAsciiLines\(Math\.min\(asciiLineCount/);
+  assert.match(page, /style=\{\{ clipPath: `inset\(0 0 \$\{100 - asciiRevealPercent\}% 0\)` \}\}/);
+  assert.match(page, /className="ascii-terminal-status"/);
   assert.doesNotMatch(page, /SELF_PORTRAIT\.ASCII/);
   assert.match(page, /setAsciiArt\(source\.replace\(\/\\r\\n\/g, "\\n"\)\)/);
   assert.doesNotMatch(page, /firstDenseLine|lines\.splice/);
@@ -80,6 +85,8 @@ test("ships and safely contains the supplied ASCII self portrait", async () => {
   assert.match(css, /\.ascii-art-frame\s*\{[\s\S]*?aspect-ratio:\s*6\s*\/\s*5/);
   assert.doesNotMatch(css, /min-height:\s*(?:390|430|300|250|220)px/);
   assert.match(css, /\.ascii-art-frame pre\s*\{[\s\S]*?white-space:\s*pre/);
+  assert.match(css, /\.ascii-reveal\s*\{[\s\S]*?will-change:\s*clip-path/);
+  assert.match(css, /\.ascii-scan-line\s*\{/);
 });
 
 test("offers English with automatic regional language detection", async () => {
