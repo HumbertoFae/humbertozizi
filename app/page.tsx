@@ -566,25 +566,6 @@ export default function Home() {
                 </div>
               </article>
 
-              <div className="preview-stack" aria-label={t.previews}>
-                <div className="floating-window web-window hero-enter enter-four">
-                  <div className="window-chrome"><span /><span /><span /><b>nocode.studio</b><em>{t.run} ▷</em></div>
-                  <div className="window-content">
-                    <small>{t.visualEditor}</small>
-                    <strong>{t.ideasInterface}</strong>
-                    <div className="window-blocks"><i /><i /><i /></div>
-                  </div>
-                </div>
-                <div className="floating-window compact-window hero-enter enter-five">
-                  <div className="window-chrome"><span /><span /><span /><b>aram.overlay</b></div>
-                  <div className="compact-content">
-                    <span className="compact-avatar">A</span>
-                    <div><small>{t.activeMatch}</small><strong>{t.adaptiveBuild}</strong></div>
-                    <em>LIVE</em>
-                  </div>
-                  <div className="compact-items"><i /><i /><i /><i /><i /><i /></div>
-                </div>
-              </div>
             </div>
             <a className="scroll-hint" href="#projetos"><span>scroll</span><i aria-hidden="true" /></a>
           </section>

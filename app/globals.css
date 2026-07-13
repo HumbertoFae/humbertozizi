@@ -381,8 +381,8 @@ section {
 
 .hero-canvas {
   display: grid;
-  grid-template-columns: minmax(540px, 1.45fr) minmax(270px, 0.62fr);
-  gap: clamp(16px, 2.3vw, 34px);
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0;
   align-items: center;
 }
 
@@ -1686,12 +1686,12 @@ section {
 
 @media (max-width: 1220px) {
   :root { --sidebar: 204px; }
-  .hero-canvas { grid-template-columns: minmax(500px, 1.25fr) minmax(235px, 0.58fr); }
-  .readme-panel { grid-template-columns: 36px minmax(0, 1fr); }
+  .hero-canvas { grid-template-columns: minmax(0, 1fr); }
+  .readme-panel { grid-template-columns: 36px minmax(0, 1.1fr) minmax(260px, 0.84fr); }
   .ascii-portrait {
-    grid-column: 2;
-    width: min(100%, 560px);
-    margin-top: 30px;
+    grid-column: 3;
+    width: 100%;
+    margin-top: 0;
     justify-self: center;
   }
   .window-content { min-height: 240px; padding: 28px 24px; }

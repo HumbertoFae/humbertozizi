@@ -40,6 +40,7 @@ test("renders the complete Humberto Zizi portfolio", async () => {
   assert.match(html, /ARAM Overlay/);
   assert.match(html, /CSGORoll Alerts/);
   assert.match(html, /Vamos tirar do papel/);
+  assert.doesNotMatch(html, /nocode\.studio|aram\.overlay/);
   assert.doesNotMatch(html, /codex-preview|Your site is taking shape|react-loading-skeleton/i);
 });
 
@@ -102,4 +103,5 @@ test("offers English with automatic regional language detection", async () => {
   assert.match(page, /Hello,/);
   assert.match(page, /available for projects/);
   assert.match(css, /\.language-switch button\.active/);
+  assert.match(css, /\.hero-canvas\s*\{[\s\S]*?grid-template-columns:\s*minmax\(0, 1fr\)/);
 });
