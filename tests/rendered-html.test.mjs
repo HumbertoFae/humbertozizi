@@ -70,6 +70,8 @@ test("ships and safely contains the supplied ASCII self portrait", async () => {
   assert.equal(lines.length, 100);
   assert.equal(Math.max(...lines.map((line) => line.length)), 200);
   assert.match(page, /fetch\("\/ascii-art\.txt"\)/);
+  assert.match(page, /<code className="ascii-label"><b>const<\/b> self = <em>&quot;Humberto Zizi&quot;<\/em>;<span className="ascii-cursor" \/><\/code>/);
+  assert.doesNotMatch(page, /SELF_PORTRAIT\.ASCII/);
   assert.match(page, /setAsciiArt\(source\.replace\(\/\\r\\n\/g, "\\n"\)\)/);
   assert.doesNotMatch(page, /firstDenseLine|lines\.splice/);
   assert.match(page, /new ResizeObserver\(requestFit\)/);

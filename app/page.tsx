@@ -158,7 +158,7 @@ export default function Home() {
         setAsciiArt(source.replace(/\r\n/g, "\n"));
       })
       .catch(() => {
-        if (active) setAsciiArt("SELF_PORTRAIT.ASCII");
+        if (active) setAsciiArt("ASCII portrait unavailable");
       });
 
     return () => {
@@ -351,11 +351,10 @@ export default function Home() {
                   </div>
                 </div>
                 <div className="ascii-portrait hero-enter enter-three" aria-hidden="true">
-                  <div className="ascii-label">SELF_PORTRAIT.ASCII</div>
+                  <code className="ascii-label"><b>const</b> self = <em>&quot;Humberto Zizi&quot;</em>;<span className="ascii-cursor" /></code>
                   <div className="ascii-art-frame" ref={asciiFrameRef}>
                     {asciiArt ? <pre ref={asciiPreRef}>{asciiArt}</pre> : <span className="ascii-loading">carregando retrato_</span>}
                   </div>
-                  <span className="ascii-cursor" />
                 </div>
               </article>
 
