@@ -60,16 +60,27 @@ test("removes all disposable starter preview code", async () => {
   await assert.rejects(access(new URL("../app/_sites-preview/SkeletonPreview.tsx", import.meta.url)));
 });
 
-test("renders the generated binary portrait line by line", async () => {
+test("renders the portrait only through frequently changing binary digits", async () => {
   const [page, css, portrait] = await Promise.all([
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
-    readFile(new URL("../public/self-portrait-binary.png", import.meta.url)),
+    readFile(new URL("../public/self-portrait-source-v2.png", import.meta.url)),
   ]);
 
   assert.equal(portrait.subarray(0, 8).toString("hex"), "89504e470d0a1a0a");
   assert.ok(portrait.length > 1_000_000);
-  assert.match(page, /src="\/self-portrait-binary\.png"/);
+  assert.match(page, /const binaryPortraitRef = useRef<HTMLCanvasElement>\(null\)/);
+  assert.match(page, /<canvas ref=\{binaryPortraitRef\} className="ascii-binary-canvas" \/>/);
+  assert.match(page, /sourceImage\.src = "\/self-portrait-source-v2\.png"/);
+  assert.match(page, /sampleContext\.drawImage\(/);
+  assert.match(page, /sampleContext\.getImageData/);
+  assert.doesNotMatch(page, /context\.drawImage\(sourceImage/);
+  assert.match(page, /context\.fillText\(cell\.digit, cell\.x, cell\.y\)/);
+  assert.match(page, /const digitChangeInterval = 110/);
+  assert.match(page, /window\.setInterval\(changeBinaryDigits, digitChangeInterval\)/);
+  assert.match(page, /cell\.digit = cell\.digit === "0" \? "1" : "0"/);
+  assert.doesNotMatch(page, /<img[^>]+self-portrait/);
+  assert.doesNotMatch(page, /addEventListener\("pointermove", updatePointer\)|portraitWords|activeBinarySequence/);
   assert.doesNotMatch(page, /fetch\("\/ascii-art\.txt"\)|<pre ref=\{asciiPreRef\}/);
   assert.match(page, /const asciiCommand = 'const self = "Humberto Zizi"; render\(self\);'/);
   assert.match(page, /const portraitLineCount = 100/);
@@ -81,7 +92,8 @@ test("renders the generated binary portrait line by line", async () => {
   assert.match(css, /\.ascii-art-frame\s*\{[\s\S]*?overflow:\s*clip/);
   assert.match(css, /\.ascii-art-frame\s*\{[\s\S]*?aspect-ratio:\s*1/);
   assert.doesNotMatch(css, /min-height:\s*(?:390|430|300|250|220)px/);
-  assert.match(css, /\.ascii-reveal img\s*\{[\s\S]*?object-fit:\s*cover/);
+  assert.match(css, /\.ascii-binary-canvas\s*\{[\s\S]*?width:\s*100%[\s\S]*?height:\s*100%[\s\S]*?pointer-events:\s*none/);
+  assert.doesNotMatch(css, /\.ascii-reveal img/);
   assert.match(css, /\.ascii-reveal\s*\{[\s\S]*?will-change:\s*clip-path/);
   assert.match(css, /\.ascii-scan-line\s*\{/);
   assert.match(css, /\.ascii-portrait\s*\{[\s\S]*?background:\s*#030303/);

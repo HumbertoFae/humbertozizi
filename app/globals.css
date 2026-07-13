@@ -656,11 +656,12 @@ section {
   will-change: clip-path;
 }
 
-.ascii-reveal img {
+.ascii-binary-canvas {
   display: block;
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  background: #000;
+  pointer-events: none;
 }
 
 .ascii-cursor {

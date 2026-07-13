@@ -326,6 +326,7 @@ export default function Home() {
   const [revealedAsciiLines, setRevealedAsciiLines] = useState(0);
   const [language, setLanguage] = useState<Language>("pt");
   const timelineRef = useRef<HTMLElement>(null);
+  const binaryPortraitRef = useRef<HTMLCanvasElement>(null);
   const t = translations[language];
   const localizedProjects = projects[language];
   const asciiRenderComplete = revealedAsciiLines >= portraitLineCount;
@@ -389,6 +390,224 @@ export default function Home() {
 
     animationFrame = window.requestAnimationFrame(animateConsole);
     return () => window.cancelAnimationFrame(animationFrame);
+  }, []);
+
+  useEffect(() => {
+    const canvas = binaryPortraitRef.current;
+    const frame = canvas?.closest<HTMLElement>(".ascii-art-frame");
+    const context = canvas?.getContext("2d");
+    if (!canvas || !frame || !context) return;
+
+    type BinaryCell = {
+      column: number;
+      row: number;
+      x: number;
+      y: number;
+      alpha: number;
+      digit: "0" | "1";
+      accent: boolean;
+      phase: number;
+      mutable: boolean;
+    };
+
+    const sourceImage = new Image();
+    const sampleCanvas = document.createElement("canvas");
+    const sampleContext = sampleCanvas.getContext("2d", { willReadFrequently: true });
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const digitChangeInterval = 110;
+    if (!sampleContext) return;
+
+    let width = 0;
+    let height = 0;
+    let cellWidth = 3;
+    let cellHeight = 3;
+    let digitSize = 3;
+    let sourceReady = false;
+    let isFrameVisible = true;
+    let tick = 0;
+    let timer = 0;
+    let cells: BinaryCell[] = [];
+
+    const createRandom = (initialSeed: number) => {
+      let seed = initialSeed;
+      return () => {
+        seed = (seed * 16807) % 2147483647;
+        return (seed - 1) / 2147483646;
+      };
+    };
+
+    const prepareBinaryContext = () => {
+      context.font = `600 ${digitSize}px "Courier New", monospace`;
+      context.textAlign = "center";
+      context.textBaseline = "middle";
+    };
+
+    const drawBinaryCell = (cell: BinaryCell, clearCell = false) => {
+      if (clearCell) {
+        context.fillStyle = "#000";
+        context.fillRect(cell.column * cellWidth, cell.row * cellHeight, cellWidth, cellHeight);
+      }
+      context.fillStyle = cell.accent
+        ? `rgba(255, 116, 72, ${cell.alpha})`
+        : `rgba(244, 240, 237, ${cell.alpha})`;
+      context.fillText(cell.digit, cell.x, cell.y);
+    };
+
+    const drawBinaryPortrait = () => {
+      context.clearRect(0, 0, width, height);
+      context.fillStyle = "#000";
+      context.fillRect(0, 0, width, height);
+      prepareBinaryContext();
+      cells.forEach((cell) => drawBinaryCell(cell));
+    };
+
+    const buildBinaryPortrait = () => {
+      if (!sourceReady || width < 1 || height < 1) return;
+
+      const columns = Math.max(82, Math.min(116, Math.round(width / 3)));
+      const rows = Math.max(1, Math.round(columns * (height / width)));
+      sampleCanvas.width = columns;
+      sampleCanvas.height = rows;
+      sampleContext.clearRect(0, 0, sampleCanvas.width, sampleCanvas.height);
+
+      const sourceAspect = sourceImage.naturalWidth / sourceImage.naturalHeight;
+      const frameAspect = width / height;
+      let sourceX = 0;
+      let sourceY = 0;
+      let sourceWidth = sourceImage.naturalWidth;
+      let sourceHeight = sourceImage.naturalHeight;
+
+      if (sourceAspect > frameAspect) {
+        sourceWidth = sourceHeight * frameAspect;
+        sourceX = (sourceImage.naturalWidth - sourceWidth) / 2;
+      } else {
+        sourceHeight = sourceWidth / frameAspect;
+        sourceY = (sourceImage.naturalHeight - sourceHeight) / 2;
+      }
+
+      sampleContext.drawImage(
+        sourceImage,
+        sourceX,
+        sourceY,
+        sourceWidth,
+        sourceHeight,
+        0,
+        0,
+        sampleCanvas.width,
+        sampleCanvas.height,
+      );
+
+      const pixels = sampleContext.getImageData(0, 0, sampleCanvas.width, sampleCanvas.height).data;
+      const random = createRandom(2917);
+      const nextCells: BinaryCell[] = [];
+      cellWidth = width / columns;
+      cellHeight = height / rows;
+      digitSize = Math.max(2.4, Math.min(cellWidth, cellHeight) * 0.9);
+
+      for (let row = 0; row < rows; row += 1) {
+        for (let column = 0; column < columns; column += 1) {
+          const index = (row * columns + column) * 4;
+          const red = pixels[index] ?? 0;
+          const green = pixels[index + 1] ?? 0;
+          const blue = pixels[index + 2] ?? 0;
+          const luminance = (red * 0.2126 + green * 0.7152 + blue * 0.0722) / 255;
+          const occupancyRandom = random();
+          if (luminance <= 0.045) continue;
+
+          const tone = Math.pow(Math.min(1, Math.max(0, (luminance - 0.045) / 0.955)), 0.72);
+          if (occupancyRandom > 0.34 + tone * 0.66) continue;
+
+          nextCells.push({
+            column,
+            row,
+            x: (column + 0.5) * cellWidth,
+            y: (row + 0.5) * cellHeight,
+            alpha: 0.16 + tone * 0.84,
+            digit: random() > 0.5 ? "1" : "0",
+            accent: random() > 0.91,
+            phase: Math.floor(random() * 17),
+            mutable: random() < 0.32,
+          });
+        }
+      }
+
+      cells = nextCells;
+      drawBinaryPortrait();
+    };
+
+    const resizeCanvas = () => {
+      const rect = frame.getBoundingClientRect();
+      const pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
+      width = rect.width;
+      height = rect.height;
+      canvas.width = Math.max(1, Math.round(width * pixelRatio));
+      canvas.height = Math.max(1, Math.round(height * pixelRatio));
+      context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+      buildBinaryPortrait();
+    };
+
+    const changeBinaryDigits = () => {
+      tick += 1;
+      prepareBinaryContext();
+      cells.forEach((cell, index) => {
+        if (cell.mutable && (index * 7 + cell.phase + tick * 3) % 5 === 0) {
+          cell.digit = cell.digit === "0" ? "1" : "0";
+          drawBinaryCell(cell, true);
+        }
+      });
+    };
+
+    const stopDigitTimer = () => {
+      if (!timer) return;
+      window.clearInterval(timer);
+      timer = 0;
+    };
+
+    const updateDigitTimer = () => {
+      if (reducedMotion || document.hidden || !isFrameVisible) {
+        stopDigitTimer();
+        return;
+      }
+      if (!timer) timer = window.setInterval(changeBinaryDigits, digitChangeInterval);
+    };
+
+    const onSourceLoad = () => {
+      sourceReady = true;
+      buildBinaryPortrait();
+    };
+    const onSourceError = () => {
+      sourceReady = false;
+      cells = [];
+      drawBinaryPortrait();
+    };
+    const onVisibilityChange = () => updateDigitTimer();
+
+    sourceImage.addEventListener("load", onSourceLoad);
+    sourceImage.addEventListener("error", onSourceError);
+    sourceImage.src = "/self-portrait-source-v2.png";
+
+    const resizeObserver = new ResizeObserver(resizeCanvas);
+    const visibilityObserver = new IntersectionObserver(
+      ([entry]) => {
+        isFrameVisible = entry?.isIntersecting ?? false;
+        updateDigitTimer();
+      },
+      { threshold: 0.05 },
+    );
+    resizeObserver.observe(frame);
+    visibilityObserver.observe(frame);
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    resizeCanvas();
+    updateDigitTimer();
+
+    return () => {
+      resizeObserver.disconnect();
+      visibilityObserver.disconnect();
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+      sourceImage.removeEventListener("load", onSourceLoad);
+      sourceImage.removeEventListener("error", onSourceError);
+      stopDigitTimer();
+    };
   }, []);
 
   useEffect(() => {
@@ -555,7 +774,7 @@ export default function Home() {
                   </div>
                   <div className="ascii-art-frame">
                     <div className="ascii-reveal" style={{ clipPath: `inset(0 0 ${100 - asciiRevealPercent}% 0)` }}>
-                      <img src="/self-portrait-binary.png" alt="" width="1024" height="1024" />
+                      <canvas ref={binaryPortraitRef} className="ascii-binary-canvas" />
                     </div>
                     {!asciiRenderComplete && revealedAsciiLines > 0 ? <i className="ascii-scan-line" style={{ top: `${asciiRevealPercent}%` }} /> : null}
                   </div>
