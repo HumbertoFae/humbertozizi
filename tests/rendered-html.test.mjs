@@ -32,7 +32,7 @@ test("renders the complete Beto portfolio", async () => {
 
   const html = await response.text();
   assert.match(html, /<html[^>]*lang="pt-BR"/i);
-  assert.match(html, /Beto\.dev/);
+  assert.match(html, /humbertozizi\.dev/);
   assert.match(html, /Olá,[\s\S]*eu sou Beto/);
   assert.match(html, /git log --projects/);
   assert.match(html, /NoCode Studio/);
@@ -50,7 +50,8 @@ test("removes all disposable starter preview code", async () => {
   ]);
 
   assert.match(page, /projects\.git/);
-  assert.match(layout, /Beto\.dev/);
+  assert.match(layout, /humbertozizi\.dev/);
+  assert.match(page, /<span>humbertozizi<\/span><b>\.dev<\/b>/);
   assert.doesNotMatch(page, /SkeletonPreview|codex-preview/);
   assert.doesNotMatch(layout, /Starter Project|codex-preview/);
   assert.doesNotMatch(packageJson, /react-loading-skeleton/);

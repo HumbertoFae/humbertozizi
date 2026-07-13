@@ -285,7 +285,7 @@ export default function Home() {
 
       <header className="topbar">
         <a className="brand" href="#inicio" aria-label="Voltar ao início">
-          <span>beto</span><b>.dev</b>
+          <span>humbertozizi</span><b>.dev</b>
         </a>
         <a className="command-link" href="#projetos">
           <span aria-hidden="true">›</span> explorar projetos <i aria-hidden="true" />

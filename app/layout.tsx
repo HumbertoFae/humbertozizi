@@ -24,7 +24,7 @@ export async function generateMetadata(): Promise<Metadata> {
     requestHeaders.get("x-forwarded-proto") ??
     (host.startsWith("localhost") || host.startsWith("127.0.0.1") ? "http" : "https");
   const origin = `${protocol}://${host}`;
-  const title = "Beto.dev — Projetos e experiências digitais";
+  const title = "humbertozizi.dev — Projetos e experiências digitais";
   const description =
     "Biografia e arquivo de projetos de Beto: sites, aplicativos, extensões e experiências digitais construídas com intenção.";
   const imageUrl = `${origin}/og.png`;
@@ -33,10 +33,10 @@ export async function generateMetadata(): Promise<Metadata> {
     metadataBase: new URL(origin),
     title: {
       default: title,
-      template: "%s — Beto.dev",
+      template: "%s — humbertozizi.dev",
     },
     description,
-    applicationName: "Beto.dev",
+    applicationName: "humbertozizi.dev",
     keywords: ["Beto", "portfólio", "desenvolvimento web", "aplicativos", "projetos pessoais"],
     authors: [{ name: "Beto" }],
     alternates: { canonical: `${origin}/` },
@@ -49,7 +49,7 @@ export async function generateMetadata(): Promise<Metadata> {
       type: "website",
       locale: "pt_BR",
       url: `${origin}/`,
-      siteName: "Beto.dev",
+      siteName: "humbertozizi.dev",
       title,
       description,
       images: [
@@ -57,7 +57,7 @@ export async function generateMetadata(): Promise<Metadata> {
           url: imageUrl,
           width: 1672,
           height: 941,
-          alt: "Beto.dev — Projetos e experiências digitais",
+          alt: "humbertozizi.dev — Projetos e experiências digitais",
         },
       ],
     },
