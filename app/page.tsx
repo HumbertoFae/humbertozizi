@@ -46,7 +46,6 @@ const translations = {
     terminalComplete: "concluído",
     terminalGenerating: "gerando retrato",
     terminalLine: "linha",
-    portraitWords: ["CURIOSO", "CRIATIVO", "INVENTIVO", "PERSISTENTE"],
     previews: "Prévias dos projetos",
     run: "executar",
     visualEditor: "EDITOR VISUAL / 01",
@@ -119,7 +118,6 @@ const translations = {
     terminalComplete: "complete",
     terminalGenerating: "generating portrait",
     terminalLine: "line",
-    portraitWords: ["CURIOUS", "CREATIVE", "INVENTIVE", "PERSISTENT"],
     previews: "Project previews",
     run: "run",
     visualEditor: "VISUAL EDITOR / 01",
@@ -328,7 +326,6 @@ export default function Home() {
   const [revealedAsciiLines, setRevealedAsciiLines] = useState(0);
   const [language, setLanguage] = useState<Language>("pt");
   const timelineRef = useRef<HTMLElement>(null);
-  const binaryCanvasRef = useRef<HTMLCanvasElement>(null);
   const t = translations[language];
   const localizedProjects = projects[language];
   const asciiRenderComplete = revealedAsciiLines >= portraitLineCount;
@@ -393,284 +390,6 @@ export default function Home() {
     animationFrame = window.requestAnimationFrame(animateConsole);
     return () => window.cancelAnimationFrame(animationFrame);
   }, []);
-
-  useEffect(() => {
-    const canvas = binaryCanvasRef.current;
-    const frame = canvas?.closest<HTMLElement>(".ascii-art-frame");
-    const context = canvas?.getContext("2d");
-    if (!canvas || !frame || !context) return;
-
-    type PortraitDigit = {
-      baseX: number;
-      baseY: number;
-      x: number;
-      y: number;
-      size: number;
-      scale: number;
-      alpha: number;
-      digit: "0" | "1";
-      orange: boolean;
-    };
-
-    const pointer = { x: 0, y: 0, active: false, influence: 0 };
-    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const sourceImage = new Image();
-    const baseLayer = document.createElement("canvas");
-    const sampleLayer = document.createElement("canvas");
-    const baseContext = baseLayer.getContext("2d", { alpha: true });
-    const sampleContext = sampleLayer.getContext("2d", { willReadFrequently: true });
-    if (!baseContext || !sampleContext) return;
-
-    let portraitDigits: PortraitDigit[] = [];
-    let animationFrame = 0;
-    let width = 0;
-    let height = 0;
-    let sourceReady = false;
-    let activeWordIndex = -1;
-    let activeWord = "";
-    let activeBinarySequence = "";
-    let overlayAlpha = 0;
-    let sequenceProgress = 0;
-
-    const createRandom = (initialSeed: number) => {
-      let seed = initialSeed;
-      return () => {
-        seed = (seed * 16807) % 2147483647;
-        return (seed - 1) / 2147483646;
-      };
-    };
-
-    const toBinarySequence = (word: string) =>
-      Array.from(word)
-        .map((character) => character.charCodeAt(0).toString(2).padStart(8, "0"))
-        .join(" ");
-
-    const drawPortraitBase = () => {
-      baseContext.clearRect(0, 0, width, height);
-      baseContext.textAlign = "center";
-      baseContext.textBaseline = "middle";
-      portraitDigits.forEach((particle) => {
-        baseContext.font = `600 ${particle.size}px "Courier New", monospace`;
-        baseContext.fillStyle = particle.orange
-          ? `rgba(255, 116, 72, ${particle.alpha})`
-          : `rgba(242, 238, 235, ${particle.alpha})`;
-        baseContext.fillText(particle.digit, particle.baseX, particle.baseY);
-      });
-    };
-
-    const buildBinaryPortrait = () => {
-      if (!sourceReady || width < 1 || height < 1) return;
-      sampleLayer.width = Math.max(1, Math.round(width));
-      sampleLayer.height = Math.max(1, Math.round(height));
-      sampleContext.clearRect(0, 0, width, height);
-      sampleContext.drawImage(sourceImage, 0, 0, width, height);
-      const pixels = sampleContext.getImageData(0, 0, sampleLayer.width, sampleLayer.height).data;
-      const step = Math.max(3, Math.round(width / 118));
-      const random = createRandom(2917);
-      const nextDigits: PortraitDigit[] = [];
-
-      for (let y = 0; y < height; y += step) {
-        for (let x = 0; x < width; x += step) {
-          let strongest = 0;
-          for (let sampleY = y; sampleY < Math.min(y + step, height); sampleY += 2) {
-            for (let sampleX = x; sampleX < Math.min(x + step, width); sampleX += 2) {
-              const index = (Math.floor(sampleY) * sampleLayer.width + Math.floor(sampleX)) * 4;
-              const red = pixels[index] ?? 0;
-              const green = pixels[index + 1] ?? 0;
-              const blue = pixels[index + 2] ?? 0;
-              const brightness = red * 0.3 + green * 0.59 + blue * 0.11;
-              if (brightness > strongest) strongest = brightness;
-            }
-          }
-
-          if (strongest > 17) {
-            const baseX = x + step / 2;
-            const baseY = y + step / 2;
-            nextDigits.push({
-              baseX,
-              baseY,
-              x: baseX,
-              y: baseY,
-              size: Math.max(3, step * 1.06),
-              scale: 1,
-              alpha: Math.min(1, 0.22 + strongest / 245),
-              digit: random() > 0.5 ? "1" : "0",
-              orange: random() > 0.93,
-            });
-          }
-        }
-      }
-
-      portraitDigits = nextDigits;
-      drawPortraitBase();
-      if (reducedMotion) renderFrame();
-    };
-
-    const resizeCanvas = () => {
-      const rect = frame.getBoundingClientRect();
-      const pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
-      width = rect.width;
-      height = rect.height;
-      canvas.width = Math.max(1, Math.round(width * pixelRatio));
-      canvas.height = Math.max(1, Math.round(height * pixelRatio));
-      context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
-      baseLayer.width = Math.max(1, Math.round(width));
-      baseLayer.height = Math.max(1, Math.round(height));
-      activeWordIndex = -1;
-      activeWord = "";
-      activeBinarySequence = "";
-      overlayAlpha = 0;
-      sequenceProgress = 0;
-      buildBinaryPortrait();
-    };
-
-    function renderFrame() {
-      context.clearRect(0, 0, width, height);
-      context.drawImage(baseLayer, 0, 0, width, height);
-      pointer.influence += ((pointer.active ? 1 : 0) - pointer.influence) * 0.12;
-      const repelRadius = Math.max(58, Math.min(94, width * 0.21)) * pointer.influence;
-
-      if (repelRadius > 1) {
-        context.save();
-        context.globalCompositeOperation = "destination-out";
-        const hole = context.createRadialGradient(pointer.x, pointer.y, 0, pointer.x, pointer.y, repelRadius);
-        hole.addColorStop(0, "rgba(0,0,0,1)");
-        hole.addColorStop(0.68, "rgba(0,0,0,0.92)");
-        hole.addColorStop(1, "rgba(0,0,0,0)");
-        context.fillStyle = hole;
-        context.fillRect(pointer.x - repelRadius, pointer.y - repelRadius, repelRadius * 2, repelRadius * 2);
-        context.restore();
-
-        context.textAlign = "center";
-        context.textBaseline = "middle";
-        portraitDigits.forEach((particle) => {
-          const deltaX = particle.baseX - pointer.x;
-          const deltaY = particle.baseY - pointer.y;
-          const distance = Math.max(1, Math.hypot(deltaX, deltaY));
-          if (distance < repelRadius * 1.12) {
-            const proximity = Math.max(0, 1 - distance / (repelRadius * 1.12));
-            const displacement = proximity * proximity * repelRadius * 0.58;
-            const targetX = particle.baseX + (deltaX / distance) * displacement;
-            const targetY = particle.baseY + (deltaY / distance) * displacement;
-            const targetScale = 1 + proximity * 1.85;
-            particle.x += (targetX - particle.x) * 0.13;
-            particle.y += (targetY - particle.y) * 0.13;
-            particle.scale += (targetScale - particle.scale) * 0.14;
-            context.font = `600 ${particle.size * particle.scale}px "Courier New", monospace`;
-            context.fillStyle = particle.orange
-              ? `rgba(255, 116, 72, ${particle.alpha})`
-              : `rgba(242, 238, 235, ${particle.alpha})`;
-            context.fillText(particle.digit, particle.x, particle.y);
-          } else {
-            particle.x += (particle.baseX - particle.x) * 0.14;
-            particle.y += (particle.baseY - particle.y) * 0.14;
-            particle.scale += (1 - particle.scale) * 0.14;
-          }
-        });
-      }
-
-      const overlayTarget = pointer.active && activeWord ? 1 : 0;
-      overlayAlpha += (overlayTarget - overlayAlpha) * 0.09;
-      sequenceProgress += (overlayTarget - sequenceProgress) * 0.075;
-      if (activeBinarySequence && overlayAlpha > 0.01) {
-        context.save();
-        context.globalCompositeOperation = "source-over";
-        const veil = context.createRadialGradient(width / 2, height / 2, 0, width / 2, height / 2, width * 0.46);
-        veil.addColorStop(0, `rgba(0,0,0,${0.88 * overlayAlpha})`);
-        veil.addColorStop(0.68, `rgba(0,0,0,${0.48 * overlayAlpha})`);
-        veil.addColorStop(1, "rgba(0,0,0,0)");
-        context.fillStyle = veil;
-        context.fillRect(0, height * 0.32, width, height * 0.36);
-
-        let binaryFontSize = Math.max(4.4, Math.min(7.5, width / 52));
-        context.font = `700 ${binaryFontSize}px "Courier New", monospace`;
-        const maximumBinaryWidth = width * 0.88;
-        const measuredBinaryWidth = context.measureText(activeBinarySequence).width;
-        if (measuredBinaryWidth > maximumBinaryWidth) {
-          binaryFontSize = Math.max(3.8, binaryFontSize * (maximumBinaryWidth / measuredBinaryWidth));
-          context.font = `700 ${binaryFontSize}px "Courier New", monospace`;
-        }
-        const fullBinaryWidth = context.measureText(activeBinarySequence).width;
-        const visibleBinaryLength = Math.floor(activeBinarySequence.length * Math.min(1, sequenceProgress * 1.14));
-        const visibleBinary = activeBinarySequence.slice(0, visibleBinaryLength);
-        context.textAlign = "left";
-        context.textBaseline = "middle";
-        context.fillStyle = `rgba(255, 116, 72, ${0.98 * overlayAlpha})`;
-        context.fillText(visibleBinary, (width - fullBinaryWidth) / 2, height / 2 - 18);
-
-        const readableAlpha = Math.max(0, Math.min(1, (sequenceProgress - 0.28) / 0.72)) * overlayAlpha;
-        if (readableAlpha > 0.01) {
-          const wordFontSize = Math.max(22, Math.min(42, width / 9.5));
-          const wordScale = 0.92 + readableAlpha * 0.08;
-          context.translate(width / 2, height / 2 + 18);
-          context.scale(wordScale, wordScale);
-          context.font = `800 ${wordFontSize}px Arial, sans-serif`;
-          context.textAlign = "center";
-          context.fillStyle = `rgba(255, 247, 242, ${readableAlpha})`;
-          context.shadowColor = `rgba(255, 116, 72, ${0.6 * readableAlpha})`;
-          context.shadowBlur = 12;
-          context.fillText(activeWord, 0, 0);
-        }
-        context.restore();
-      }
-
-      if (!pointer.active && pointer.influence < 0.01) {
-        portraitDigits.forEach((particle) => {
-          particle.x = particle.baseX;
-          particle.y = particle.baseY;
-          particle.scale = 1;
-        });
-      }
-    }
-
-    const animateParticles = () => {
-      renderFrame();
-      animationFrame = window.requestAnimationFrame(animateParticles);
-    };
-    const updatePointer = (event: PointerEvent) => {
-      const rect = frame.getBoundingClientRect();
-      pointer.x = event.clientX - rect.left;
-      pointer.y = event.clientY - rect.top;
-      pointer.active = true;
-      const nextWordIndex = (pointer.y < height / 2 ? 0 : 2) + (pointer.x < width / 2 ? 0 : 1);
-      if (nextWordIndex !== activeWordIndex) {
-        activeWordIndex = nextWordIndex;
-        activeWord = t.portraitWords[nextWordIndex] ?? "";
-        activeBinarySequence = toBinarySequence(activeWord);
-        overlayAlpha = 0;
-        sequenceProgress = 0;
-      }
-    };
-    const clearPointer = () => { pointer.active = false; };
-
-    const onSourceLoad = () => {
-      sourceReady = true;
-      buildBinaryPortrait();
-    };
-    sourceImage.addEventListener("load", onSourceLoad);
-    sourceImage.src = "/self-portrait-source-v2.png";
-
-    const resizeObserver = new ResizeObserver(resizeCanvas);
-    resizeObserver.observe(frame);
-    resizeCanvas();
-
-    if (reducedMotion) renderFrame();
-    else {
-      frame.addEventListener("pointermove", updatePointer);
-      frame.addEventListener("pointerleave", clearPointer);
-      frame.addEventListener("pointercancel", clearPointer);
-      animationFrame = window.requestAnimationFrame(animateParticles);
-    }
-
-    return () => {
-      resizeObserver.disconnect();
-      frame.removeEventListener("pointermove", updatePointer);
-      frame.removeEventListener("pointerleave", clearPointer);
-      frame.removeEventListener("pointercancel", clearPointer);
-      sourceImage.removeEventListener("load", onSourceLoad);
-      window.cancelAnimationFrame(animationFrame);
-    };
-  }, [language, t.portraitWords]);
 
   useEffect(() => {
     document.documentElement.classList.add("motion-ready");
@@ -836,7 +555,7 @@ export default function Home() {
                   </div>
                   <div className="ascii-art-frame">
                     <div className="ascii-reveal" style={{ clipPath: `inset(0 0 ${100 - asciiRevealPercent}% 0)` }}>
-                      <canvas ref={binaryCanvasRef} className="ascii-binary-canvas" />
+                      <img src="/self-portrait-binary.png" alt="" width="1024" height="1024" />
                     </div>
                     {!asciiRenderComplete && revealedAsciiLines > 0 ? <i className="ascii-scan-line" style={{ top: `${asciiRevealPercent}%` }} /> : null}
                   </div>
