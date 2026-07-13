@@ -87,6 +87,8 @@ test("ships and safely contains the supplied ASCII self portrait", async () => {
   assert.match(css, /\.ascii-art-frame pre\s*\{[\s\S]*?white-space:\s*pre/);
   assert.match(css, /\.ascii-reveal\s*\{[\s\S]*?will-change:\s*clip-path/);
   assert.match(css, /\.ascii-scan-line\s*\{/);
+  assert.match(css, /\.ascii-portrait\s*\{[\s\S]*?background:\s*#030303/);
+  assert.match(css, /\.ascii-scan-line\s*\{[\s\S]*?background:\s*var\(--orange-soft\)/);
 });
 
 test("offers English with automatic regional language detection", async () => {
