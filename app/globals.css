@@ -426,6 +426,13 @@ section {
   transform: translateY(-0.06em);
 }
 
+.readme-copy .person-name {
+  display: block;
+  font-size: 0.72em;
+  line-height: 0.96;
+  letter-spacing: -0.06em;
+}
+
 .hero-lead {
   max-width: 560px;
   margin: 32px 0 0;

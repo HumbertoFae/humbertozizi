@@ -26,7 +26,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const origin = `${protocol}://${host}`;
   const title = "humbertozizi.dev — Projetos e experiências digitais";
   const description =
-    "Biografia e arquivo de projetos de Beto: sites, aplicativos, extensões e experiências digitais construídas com intenção.";
+    "Biografia e arquivo de projetos de Humberto Zizi: sites, aplicativos, extensões e experiências digitais construídas com intenção.";
   const imageUrl = `${origin}/og.png`;
 
   return {
@@ -37,8 +37,8 @@ export async function generateMetadata(): Promise<Metadata> {
     },
     description,
     applicationName: "humbertozizi.dev",
-    keywords: ["Beto", "portfólio", "desenvolvimento web", "aplicativos", "projetos pessoais"],
-    authors: [{ name: "Beto" }],
+    keywords: ["Humberto Zizi", "portfólio", "desenvolvimento web", "aplicativos", "projetos pessoais"],
+    authors: [{ name: "Humberto Zizi" }],
     alternates: { canonical: `${origin}/` },
     robots: { index: true, follow: true },
     icons: {

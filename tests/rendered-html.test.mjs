@@ -25,7 +25,7 @@ async function render() {
   );
 }
 
-test("renders the complete Beto portfolio", async () => {
+test("renders the complete Humberto Zizi portfolio", async () => {
   const response = await render();
   assert.equal(response.status, 200);
   assert.match(response.headers.get("content-type") ?? "", /^text\/html\b/i);
@@ -33,7 +33,8 @@ test("renders the complete Beto portfolio", async () => {
   const html = await response.text();
   assert.match(html, /<html[^>]*lang="pt-BR"/i);
   assert.match(html, /humbertozizi\.dev/);
-  assert.match(html, /Olá,[\s\S]*eu sou Beto/);
+  assert.match(html, /Olá,[\s\S]*eu sou[\s\S]*Humberto Zizi/);
+  assert.doesNotMatch(html, /(?:\/home\/|const |@dev|© 2026 )beto\b/i);
   assert.match(html, /git log --projects/);
   assert.match(html, /NoCode Studio/);
   assert.match(html, /ARAM Overlay/);

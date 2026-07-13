@@ -304,7 +304,7 @@ export default function Home() {
 
       <div className="workspace">
         <aside className={`repo-sidebar ${menuOpen ? "is-open" : ""}`} aria-label="Explorador do portfólio">
-          <div className="repo-heading"><span aria-hidden="true">⌄</span> /home/beto</div>
+          <div className="repo-heading"><span aria-hidden="true">⌄</span> /home/humbertozizi</div>
           <nav aria-label="Seções do portfólio">
             {navItems.map((item) => (
               <a
@@ -334,7 +334,7 @@ export default function Home() {
                 <div className="line-numbers" aria-hidden="true">01<br />02<br />03<br />04<br />05<br />06<br />07<br />08<br />09<br />10<br />11<br />12</div>
                 <div className="readme-copy">
                   <p className="eyebrow hero-enter enter-one"><span>#</span> README / BEM-VINDO</p>
-                  <h1 className="hero-enter enter-two"><span className="hash">#</span> Olá,<br />eu sou Beto.</h1>
+                  <h1 className="hero-enter enter-two"><span className="hash">#</span> Olá,<br />eu sou <span className="person-name">Humberto Zizi.</span></h1>
                   <p className="hero-lead hero-enter enter-three">
                     Transformo ideias em <strong>sites, apps</strong> e experiências digitais que resolvem problemas reais.
                   </p>
@@ -342,8 +342,8 @@ export default function Home() {
                     <a className="primary-action" href="#projetos">ver projetos <span>↓</span></a>
                     <a className="text-action" href="#sobre">ler sobre mim <span>↗</span></a>
                   </div>
-                  <div className="code-self hero-enter enter-five" aria-label="Trecho de código que descreve Beto">
-                    <span><b>const</b> beto = {'{'}</span>
+                  <div className="code-self hero-enter enter-five" aria-label="Trecho de código que descreve Humberto Zizi">
+                    <span><b>const</b> humbertoZizi = {'{'}</span>
                     <span>&nbsp;&nbsp;curiosidade: <em>true</em>,</span>
                     <span>&nbsp;&nbsp;construindo: [<i>&quot;sites&quot;</i>, <i>&quot;apps&quot;</i>, <i>&quot;ideias&quot;</i>],</span>
                     <span>&nbsp;&nbsp;status: <i>&quot;em evolução&quot;</i></span>
@@ -452,12 +452,12 @@ export default function Home() {
 
           <section id="contato" className="contact-section" data-section>
             <div className="contact-terminal reveal">
-              <div className="contact-prompt"><span>beto@dev</span>:<b>~/contato</b>$ start conversation</div>
+              <div className="contact-prompt"><span>humbertozizi@dev</span>:<b>~/contato</b>$ start conversation</div>
               <p className="eyebrow"><span>04</span> CONTACT.SH</p>
               <h2>Tem uma ideia?<br /><em>Vamos tirar do papel.</em></h2>
               <p className="contact-copy">Sites, aplicativos, experimentos ou apenas uma boa conversa sobre o que pode ser construído.</p>
               <div className="contact-actions">
-                <a className="contact-primary" href="mailto:contato@beto.dev?subject=Vamos%20construir%20algo">enviar uma mensagem <span>↗</span></a>
+                <a className="contact-primary" href="mailto:contato@humbertozizi.dev?subject=Vamos%20construir%20algo">enviar uma mensagem <span>↗</span></a>
                 <a href="#inicio">voltar ao README <span>↑</span></a>
               </div>
               <div className="waiting-line"><span>›</span> aguardando sua mensagem<i aria-hidden="true" /></div>
@@ -471,7 +471,7 @@ export default function Home() {
         <span>0 erros</span>
         <span>UTF-8</span>
         <span className="status-location">São Paulo, BR</span>
-        <span>© 2026 Beto</span>
+        <span>© 2026 Humberto Zizi</span>
         <strong>build: ok</strong>
       </footer>
     </div>
