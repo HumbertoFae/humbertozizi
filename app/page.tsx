@@ -155,20 +155,7 @@ export default function Home() {
       })
       .then((source) => {
         if (!active) return;
-        const lines = source
-          .replace(/\r\n/g, "\n")
-          .split("\n")
-          .map((line) => line.replace(/\s+$/, ""));
-
-        while (lines.length && !lines[0].trim()) lines.shift();
-        while (lines.length && !lines.at(-1)?.trim()) lines.pop();
-
-        const firstDenseLine = lines.findIndex(
-          (line) => line.replace(/\s/g, "").length >= 20,
-        );
-        if (firstDenseLine > 0) lines.splice(0, firstDenseLine);
-
-        setAsciiArt(lines.join("\n"));
+        setAsciiArt(source.replace(/\r\n/g, "\n"));
       })
       .catch(() => {
         if (active) setAsciiArt("SELF_PORTRAIT.ASCII");
@@ -193,6 +180,8 @@ export default function Home() {
       const naturalWidth = art.scrollWidth;
       const naturalHeight = art.scrollHeight;
       if (!naturalWidth || !naturalHeight) return;
+
+      frame.style.aspectRatio = `${naturalWidth} / ${naturalHeight}`;
 
       const widthScale = frame.clientWidth / naturalWidth;
       const heightScale = frame.clientHeight / naturalHeight;
