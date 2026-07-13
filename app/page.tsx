@@ -510,16 +510,14 @@ export default function Home() {
           const luminance = (red * 0.2126 + green * 0.7152 + blue * 0.0722) / 255;
           const portraitPixel = luminance > 0.025;
           const colorVariation = random();
-          const darkColorBoost = luminance < 0.22 ? 1.38 : 1.06;
-          const portraitRed = Math.min(255, Math.max(18, Math.round(red * darkColorBoost)));
-          const portraitGreen = Math.min(255, Math.max(18, Math.round(green * darkColorBoost)));
-          const portraitBlue = Math.min(255, Math.max(18, Math.round(blue * darkColorBoost)));
+          const grayscaleBoost = luminance < 0.22 ? 1.55 : 1.08;
+          const grayscaleValue = Math.min(255, Math.max(24, Math.round(luminance * 255 * grayscaleBoost)));
           const portraitAlpha = Math.min(1, 0.76 + luminance * 0.24);
           const cellColor = portraitPixel
-            ? `rgba(${portraitRed}, ${portraitGreen}, ${portraitBlue}, ${portraitAlpha})`
+            ? `rgba(${grayscaleValue}, ${grayscaleValue}, ${grayscaleValue}, ${portraitAlpha})`
             : colorVariation > 0.96
-              ? "rgba(255, 116, 72, 0.28)"
-              : "rgba(118, 124, 128, 0.2)";
+              ? "rgba(218, 218, 218, 0.22)"
+              : "rgba(112, 112, 112, 0.18)";
 
           nextCells.push({
             column,

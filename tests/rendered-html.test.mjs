@@ -80,6 +80,9 @@ test("renders the portrait only through frequently changing binary digits", asyn
   assert.match(page, /const columns = Math\.max\(56, Math\.min\(72, Math\.round\(width \/ 5\)\)\)/);
   assert.match(page, /digitSize = Math\.max\(5, Math\.min\(cellWidth, cellHeight\) \* 1\.18\)/);
   assert.match(page, /const portraitPixel = luminance > 0\.025/);
+  assert.match(page, /const grayscaleValue = Math\.min\(255, Math\.max\(24,/);
+  assert.match(page, /`rgba\(\$\{grayscaleValue\}, \$\{grayscaleValue\}, \$\{grayscaleValue\}, \$\{portraitAlpha\}\)`/);
+  assert.doesNotMatch(page, /portraitRed|portraitGreen|portraitBlue/);
   assert.match(page, /color: cellColor/);
   assert.doesNotMatch(page, /occupancyRandom|if \(luminance <= 0\.045\) continue/);
   assert.match(page, /const digitChangeInterval = 110/);
