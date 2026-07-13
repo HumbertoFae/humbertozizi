@@ -353,7 +353,7 @@ section {
   position: relative;
   isolation: isolate;
   display: grid;
-  grid-template-columns: 42px minmax(0, 1.15fr) minmax(180px, 0.72fr);
+  grid-template-columns: 42px minmax(0, 1.1fr) minmax(260px, 0.84fr);
   min-height: 570px;
   padding: clamp(28px, 4vw, 62px) clamp(24px, 4vw, 58px) 44px 0;
   border: 1px solid var(--paper);
@@ -499,12 +499,19 @@ section {
 
 .ascii-portrait {
   position: relative;
-  align-self: center;
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 100%;
   min-width: 0;
-  padding: 26px 16px;
+  min-height: 0;
+  padding: 20px 14px 16px;
   border: 1px solid rgba(23, 26, 30, 0.14);
   background: rgba(255, 255, 255, 0.14);
-  transform: rotate(1.2deg);
+  contain: layout paint;
+  overflow: hidden;
+  overflow: clip;
 }
 
 .ascii-portrait::before,
@@ -516,21 +523,60 @@ section {
   content: "";
 }
 
-.ascii-portrait::before { top: -4px; left: -4px; }
-.ascii-portrait::after { right: -4px; bottom: -4px; }
+.ascii-portrait::before { top: 6px; left: 6px; }
+.ascii-portrait::after { right: 6px; bottom: 6px; }
 
 .ascii-label {
-  margin-bottom: 24px;
+  position: relative;
+  z-index: 2;
+  flex: 0 0 auto;
+  margin-bottom: 10px;
   color: #777a7c;
   font: 600 0.55rem var(--font-geist-mono), monospace;
   letter-spacing: 0.08em;
 }
 
-.ascii-portrait pre {
+.ascii-art-frame {
+  position: relative;
+  flex: 1 1 auto;
+  width: 100%;
+  min-width: 0;
+  min-height: 390px;
+  overflow: hidden;
+  overflow: clip;
+  isolation: isolate;
+}
+
+.ascii-art-frame::before {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border: 1px dashed rgba(23, 26, 30, 0.08);
+  content: "";
+}
+
+.ascii-art-frame pre {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: max-content;
+  max-width: none;
   margin: 0;
   color: #30343a;
-  font: 700 clamp(0.48rem, 0.66vw, 0.67rem)/1.12 var(--font-geist-mono), monospace;
+  font: 700 8px/1 var(--font-geist-mono), "Courier New", monospace;
+  font-variant-ligatures: none;
+  letter-spacing: 0;
   white-space: pre;
+  transform: translate(-50%, -50%);
+}
+
+.ascii-loading {
+  position: absolute;
+  inset: 50% auto auto 50%;
+  color: #777a7c;
+  font: 600 0.55rem var(--font-geist-mono), monospace;
+  white-space: nowrap;
+  transform: translate(-50%, -50%);
 }
 
 .ascii-cursor {
@@ -1528,7 +1574,13 @@ section {
   :root { --sidebar: 204px; }
   .hero-canvas { grid-template-columns: minmax(500px, 1.25fr) minmax(235px, 0.58fr); }
   .readme-panel { grid-template-columns: 36px minmax(0, 1fr); }
-  .ascii-portrait { display: none; }
+  .ascii-portrait {
+    grid-column: 2;
+    width: min(100%, 560px);
+    min-height: 430px;
+    margin-top: 30px;
+    justify-self: center;
+  }
   .window-content { min-height: 240px; padding: 28px 24px; }
   .compact-window { right: 2%; }
 }
@@ -1587,6 +1639,14 @@ section {
   .readme-panel { grid-template-columns: 30px minmax(0, 1fr); padding: 30px 17px 34px 0; }
   .line-numbers { font-size: 0.54rem; }
   .readme-copy { padding: 0 5px 0 18px; }
+  .ascii-portrait {
+    grid-column: 2;
+    width: auto;
+    min-height: 300px;
+    margin: 26px 5px 0 18px;
+    padding: 15px 10px 12px;
+  }
+  .ascii-art-frame { min-height: 250px; }
   .readme-copy h1 { font-size: clamp(3.2rem, 15vw, 5.4rem); }
   .hero-lead { margin-top: 25px; font-size: 0.94rem; }
   .hero-actions { align-items: stretch; flex-direction: column; gap: 8px; }
@@ -1633,6 +1693,8 @@ section {
   .topbar { grid-template-columns: 1fr auto; }
   .readme-copy h1 { font-size: 3.4rem; }
   .readme-copy .hash { display: block; margin-bottom: 9px; }
+  .ascii-portrait { min-height: 270px; }
+  .ascii-art-frame { min-height: 220px; }
   .section-heading > p { font-size: 0.78rem; }
   .project-visual { height: 205px; }
   .site-nav span { display: none; }

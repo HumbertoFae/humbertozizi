@@ -140,7 +140,74 @@ function ProjectVisual({ type, title }: { type: Project["visual"]; title: string
 export default function Home() {
   const [activeSection, setActiveSection] = useState("inicio");
   const [menuOpen, setMenuOpen] = useState(false);
+  const [asciiArt, setAsciiArt] = useState("");
   const timelineRef = useRef<HTMLElement>(null);
+  const asciiFrameRef = useRef<HTMLDivElement>(null);
+  const asciiPreRef = useRef<HTMLPreElement>(null);
+
+  useEffect(() => {
+    let active = true;
+
+    fetch("/ascii-art.txt")
+      .then((response) => {
+        if (!response.ok) throw new Error("ASCII art unavailable");
+        return response.text();
+      })
+      .then((source) => {
+        if (!active) return;
+        const lines = source
+          .replace(/\r\n/g, "\n")
+          .split("\n")
+          .map((line) => line.replace(/\s+$/, ""));
+
+        while (lines.length && !lines[0].trim()) lines.shift();
+        while (lines.length && !lines.at(-1)?.trim()) lines.pop();
+        setAsciiArt(lines.join("\n"));
+      })
+      .catch(() => {
+        if (active) setAsciiArt("SELF_PORTRAIT.ASCII");
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    const frame = asciiFrameRef.current;
+    const art = asciiPreRef.current;
+    if (!frame || !art || !asciiArt) return;
+
+    const baseFontSize = 8;
+    let active = true;
+    let animationFrame = 0;
+    const fitArt = () => {
+      animationFrame = 0;
+      art.style.fontSize = `${baseFontSize}px`;
+      const naturalWidth = art.scrollWidth;
+      const naturalHeight = art.scrollHeight;
+      if (!naturalWidth || !naturalHeight) return;
+
+      const widthScale = frame.clientWidth / naturalWidth;
+      const heightScale = frame.clientHeight / naturalHeight;
+      const scale = Math.min(widthScale, heightScale, 1) * 0.96;
+      art.style.fontSize = `${(baseFontSize * scale).toFixed(3)}px`;
+    };
+
+    const requestFit = () => {
+      if (active && !animationFrame) animationFrame = window.requestAnimationFrame(fitArt);
+    };
+    const resizeObserver = new ResizeObserver(requestFit);
+    resizeObserver.observe(frame);
+    requestFit();
+    document.fonts?.ready.then(requestFit);
+
+    return () => {
+      active = false;
+      resizeObserver.disconnect();
+      if (animationFrame) window.cancelAnimationFrame(animationFrame);
+    };
+  }, [asciiArt]);
 
   useEffect(() => {
     document.documentElement.classList.add("motion-ready");
@@ -290,15 +357,9 @@ export default function Home() {
                 </div>
                 <div className="ascii-portrait hero-enter enter-three" aria-hidden="true">
                   <div className="ascii-label">SELF_PORTRAIT.ASCII</div>
-                  <pre>{`        BBBBBBBBB
-      BB         BB
-     BB   ◉   ◉   BB
-     BB     ▪     BB
-      BB   ___   BB
-        BBBBBBBBB
-       BBBBBBBBBBB
-     BBBBBBBBBBBBBBB
-   BBBB  BETO.DEV  BBBB`}</pre>
+                  <div className="ascii-art-frame" ref={asciiFrameRef}>
+                    {asciiArt ? <pre ref={asciiPreRef}>{asciiArt}</pre> : <span className="ascii-loading">carregando retrato_</span>}
+                  </div>
                   <span className="ascii-cursor" />
                 </div>
               </article>

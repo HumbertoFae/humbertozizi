@@ -56,3 +56,19 @@ test("removes all disposable starter preview code", async () => {
   assert.doesNotMatch(packageJson, /react-loading-skeleton/);
   await assert.rejects(access(new URL("../app/_sites-preview/SkeletonPreview.tsx", import.meta.url)));
 });
+
+test("ships and safely contains the supplied ASCII self portrait", async () => {
+  const [page, css, ascii] = await Promise.all([
+    readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
+    readFile(new URL("../public/ascii-art.txt", import.meta.url), "utf8"),
+  ]);
+  const lines = ascii.replace(/\r\n/g, "\n").trimEnd().split("\n");
+
+  assert.equal(lines.length, 100);
+  assert.equal(Math.max(...lines.map((line) => line.length)), 200);
+  assert.match(page, /fetch\("\/ascii-art\.txt"\)/);
+  assert.match(page, /new ResizeObserver\(requestFit\)/);
+  assert.match(css, /\.ascii-art-frame\s*\{[\s\S]*?overflow:\s*clip/);
+  assert.match(css, /\.ascii-art-frame pre\s*\{[\s\S]*?white-space:\s*pre/);
+});
