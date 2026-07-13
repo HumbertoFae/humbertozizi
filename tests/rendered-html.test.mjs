@@ -69,11 +69,15 @@ test("renders the generated binary portrait line by line", async () => {
 
   assert.equal(portrait.subarray(0, 8).toString("hex"), "89504e470d0a1a0a");
   assert.ok(portrait.length > 1_000_000);
-  assert.match(page, /src="\/self-portrait-binary\.png"/);
+  assert.match(page, /sourceImage\.src = "\/self-portrait-binary\.png"/);
   assert.match(page, /<canvas ref=\{binaryCanvasRef\} className="ascii-binary-canvas" \/>/);
+  assert.match(page, /sampleContext\.getImageData/);
+  assert.match(page, /const step = Math\.max\(3, Math\.round\(width \/ 118\)\)/);
+  assert.match(page, /portraitWords: \["CURIOSO", "CRIATIVO", "INVENTIVO", "PERSISTENTE"\]/);
+  assert.match(page, /const buildWord = \(word: string\)/);
   assert.match(page, /frame\.addEventListener\("pointermove", updatePointer\)/);
   assert.match(page, /distance < repelRadius/);
-  assert.match(page, /particle\.vx \+= \(deltaX \/ distance\) \* force/);
+  assert.match(page, /particle\.baseX \+ \(deltaX \/ distance\) \* displacement/);
   assert.doesNotMatch(page, /fetch\("\/ascii-art\.txt"\)|<pre ref=\{asciiPreRef\}/);
   assert.match(page, /const asciiCommand = 'const self = "Humberto Zizi"; render\(self\);'/);
   assert.match(page, /const portraitLineCount = 100/);
@@ -85,8 +89,7 @@ test("renders the generated binary portrait line by line", async () => {
   assert.match(css, /\.ascii-art-frame\s*\{[\s\S]*?overflow:\s*clip/);
   assert.match(css, /\.ascii-art-frame\s*\{[\s\S]*?aspect-ratio:\s*1/);
   assert.doesNotMatch(css, /min-height:\s*(?:390|430|300|250|220)px/);
-  assert.match(css, /\.ascii-reveal img\s*\{[\s\S]*?object-fit:\s*cover/);
-  assert.match(css, /\.ascii-binary-canvas\s*\{[\s\S]*?mix-blend-mode:\s*screen/);
+  assert.match(css, /\.ascii-binary-canvas\s*\{[\s\S]*?position:\s*absolute[\s\S]*?opacity:\s*1/);
   assert.match(css, /\.ascii-reveal\s*\{[\s\S]*?will-change:\s*clip-path/);
   assert.match(css, /\.ascii-scan-line\s*\{/);
   assert.match(css, /\.ascii-portrait\s*\{[\s\S]*?background:\s*#030303/);

@@ -657,21 +657,13 @@ section {
   will-change: clip-path;
 }
 
-.ascii-reveal img {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
 .ascii-binary-canvas {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
   z-index: 1;
-  opacity: 0.82;
-  mix-blend-mode: screen;
+  opacity: 1;
   pointer-events: none;
 }
 

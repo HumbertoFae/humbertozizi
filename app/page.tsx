@@ -46,6 +46,7 @@ const translations = {
     terminalComplete: "concluído",
     terminalGenerating: "gerando retrato",
     terminalLine: "linha",
+    portraitWords: ["CURIOSO", "CRIATIVO", "INVENTIVO", "PERSISTENTE"],
     previews: "Prévias dos projetos",
     run: "executar",
     visualEditor: "EDITOR VISUAL / 01",
@@ -118,6 +119,7 @@ const translations = {
     terminalComplete: "complete",
     terminalGenerating: "generating portrait",
     terminalLine: "line",
+    portraitWords: ["CURIOUS", "CREATIVE", "INVENTIVE", "PERSISTENT"],
     previews: "Project previews",
     run: "run",
     visualEditor: "VISUAL EDITOR / 01",
@@ -398,25 +400,159 @@ export default function Home() {
     const context = canvas?.getContext("2d");
     if (!canvas || !frame || !context) return;
 
-    type BinaryParticle = {
+    type PortraitDigit = {
       baseX: number;
       baseY: number;
       x: number;
       y: number;
+      size: number;
+      alpha: number;
+      digit: "0" | "1";
+      orange: boolean;
+    };
+    type WordDigit = {
+      x: number;
+      y: number;
+      targetX: number;
+      targetY: number;
       vx: number;
       vy: number;
-      size: number;
-      phase: number;
       digit: "0" | "1";
       orange: boolean;
     };
 
-    const pointer = { x: 0, y: 0, active: false };
+    const pointer = { x: 0, y: 0, active: false, influence: 0 };
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    let particles: BinaryParticle[] = [];
+    const sourceImage = new Image();
+    const baseLayer = document.createElement("canvas");
+    const sampleLayer = document.createElement("canvas");
+    const wordLayer = document.createElement("canvas");
+    const baseContext = baseLayer.getContext("2d", { alpha: true });
+    const sampleContext = sampleLayer.getContext("2d", { willReadFrequently: true });
+    const wordContext = wordLayer.getContext("2d", { willReadFrequently: true });
+    if (!baseContext || !sampleContext || !wordContext) return;
+
+    let portraitDigits: PortraitDigit[] = [];
+    let wordDigits: WordDigit[] = [];
     let animationFrame = 0;
     let width = 0;
     let height = 0;
+    let sourceReady = false;
+    let activeWordIndex = -1;
+    let wordAlpha = 0;
+
+    const createRandom = (initialSeed: number) => {
+      let seed = initialSeed;
+      return () => {
+        seed = (seed * 16807) % 2147483647;
+        return (seed - 1) / 2147483646;
+      };
+    };
+
+    const drawPortraitBase = () => {
+      baseContext.clearRect(0, 0, width, height);
+      baseContext.textAlign = "center";
+      baseContext.textBaseline = "middle";
+      portraitDigits.forEach((particle) => {
+        baseContext.font = `600 ${particle.size}px "Courier New", monospace`;
+        baseContext.fillStyle = particle.orange
+          ? `rgba(255, 116, 72, ${particle.alpha})`
+          : `rgba(242, 238, 235, ${particle.alpha})`;
+        baseContext.fillText(particle.digit, particle.baseX, particle.baseY);
+      });
+    };
+
+    const buildBinaryPortrait = () => {
+      if (!sourceReady || width < 1 || height < 1) return;
+      sampleLayer.width = Math.max(1, Math.round(width));
+      sampleLayer.height = Math.max(1, Math.round(height));
+      sampleContext.clearRect(0, 0, width, height);
+      sampleContext.drawImage(sourceImage, 0, 0, width, height);
+      const pixels = sampleContext.getImageData(0, 0, sampleLayer.width, sampleLayer.height).data;
+      const step = Math.max(3, Math.round(width / 118));
+      const random = createRandom(2917);
+      const nextDigits: PortraitDigit[] = [];
+
+      for (let y = 0; y < height; y += step) {
+        for (let x = 0; x < width; x += step) {
+          let strongest = 0;
+          let strongestRed = 0;
+          let strongestGreen = 0;
+          for (let sampleY = y; sampleY < Math.min(y + step, height); sampleY += 2) {
+            for (let sampleX = x; sampleX < Math.min(x + step, width); sampleX += 2) {
+              const index = (Math.floor(sampleY) * sampleLayer.width + Math.floor(sampleX)) * 4;
+              const red = pixels[index] ?? 0;
+              const green = pixels[index + 1] ?? 0;
+              const blue = pixels[index + 2] ?? 0;
+              const brightness = red * 0.3 + green * 0.59 + blue * 0.11;
+              if (brightness > strongest) {
+                strongest = brightness;
+                strongestRed = red;
+                strongestGreen = green;
+              }
+            }
+          }
+
+          if (strongest > 17) {
+            const baseX = x + step / 2;
+            const baseY = y + step / 2;
+            nextDigits.push({
+              baseX,
+              baseY,
+              x: baseX,
+              y: baseY,
+              size: Math.max(3, step * 1.06),
+              alpha: Math.min(1, 0.22 + strongest / 245),
+              digit: random() > 0.5 ? "1" : "0",
+              orange: strongestRed > strongestGreen * 1.28 && strongestRed > 75,
+            });
+          }
+        }
+      }
+
+      portraitDigits = nextDigits;
+      drawPortraitBase();
+      if (reducedMotion) renderFrame(0);
+    };
+
+    const buildWord = (word: string) => {
+      wordLayer.width = Math.max(1, Math.round(width));
+      wordLayer.height = Math.max(1, Math.round(height));
+      wordContext.clearRect(0, 0, width, height);
+      const fontSize = Math.max(24, Math.min(54, width / Math.max(5.2, word.length * 0.58)));
+      wordContext.fillStyle = "#fff";
+      wordContext.font = `800 ${fontSize}px "Courier New", monospace`;
+      wordContext.textAlign = "center";
+      wordContext.textBaseline = "middle";
+      wordContext.fillText(word, width / 2, height / 2);
+      const pixels = wordContext.getImageData(0, 0, wordLayer.width, wordLayer.height).data;
+      const sampleStep = Math.max(6, Math.round(fontSize / 5.8));
+      const random = createRandom(8101 + activeWordIndex * 97);
+      const targets: Array<{ x: number; y: number }> = [];
+
+      for (let y = 0; y < height; y += sampleStep) {
+        for (let x = 0; x < width; x += sampleStep) {
+          const alpha = pixels[(Math.floor(y) * wordLayer.width + Math.floor(x)) * 4 + 3] ?? 0;
+          if (alpha > 100) targets.push({ x, y });
+        }
+      }
+
+      wordDigits = targets.map((target) => {
+        const angle = random() * Math.PI * 2;
+        const distance = 30 + random() * Math.max(70, width * 0.28);
+        return {
+          x: pointer.x + Math.cos(angle) * distance,
+          y: pointer.y + Math.sin(angle) * distance,
+          targetX: target.x,
+          targetY: target.y,
+          vx: 0,
+          vy: 0,
+          digit: random() > 0.5 ? "1" : "0",
+          orange: random() > 0.28,
+        };
+      });
+      wordAlpha = 0;
+    };
 
     const resizeCanvas = () => {
       const rect = frame.getBoundingClientRect();
@@ -426,69 +562,93 @@ export default function Home() {
       canvas.width = Math.max(1, Math.round(width * pixelRatio));
       canvas.height = Math.max(1, Math.round(height * pixelRatio));
       context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
-
-      let seed = 7421;
-      const random = () => {
-        seed = (seed * 16807) % 2147483647;
-        return (seed - 1) / 2147483646;
-      };
-      const particleCount = Math.max(38, Math.min(82, Math.round((width * height) / 3400)));
-      particles = Array.from({ length: particleCount }, () => {
-        const x = random() * width;
-        const y = random() * height;
-        return {
-          baseX: x,
-          baseY: y,
-          x,
-          y,
-          vx: 0,
-          vy: 0,
-          size: 7 + random() * 7,
-          phase: random() * Math.PI * 2,
-          digit: random() > 0.5 ? "1" : "0",
-          orange: random() > 0.62,
-        };
-      });
+      baseLayer.width = Math.max(1, Math.round(width));
+      baseLayer.height = Math.max(1, Math.round(height));
+      activeWordIndex = -1;
+      wordDigits = [];
+      buildBinaryPortrait();
     };
 
-    const drawParticles = (time: number) => {
+    function renderFrame(time: number) {
       context.clearRect(0, 0, width, height);
-      const repelRadius = Math.max(58, Math.min(92, width * 0.2));
+      context.drawImage(baseLayer, 0, 0, width, height);
+      pointer.influence += ((pointer.active ? 1 : 0) - pointer.influence) * 0.12;
+      const repelRadius = Math.max(58, Math.min(94, width * 0.21)) * pointer.influence;
 
-      particles.forEach((particle) => {
-        const idleX = Math.sin(time * 0.001 + particle.phase) * 1.5;
-        const idleY = Math.cos(time * 0.0008 + particle.phase) * 1.2;
-        const targetX = particle.baseX + idleX;
-        const targetY = particle.baseY + idleY;
+      if (repelRadius > 1) {
+        context.save();
+        context.globalCompositeOperation = "destination-out";
+        const hole = context.createRadialGradient(pointer.x, pointer.y, 0, pointer.x, pointer.y, repelRadius);
+        hole.addColorStop(0, "rgba(0,0,0,1)");
+        hole.addColorStop(0.68, "rgba(0,0,0,0.92)");
+        hole.addColorStop(1, "rgba(0,0,0,0)");
+        context.fillStyle = hole;
+        context.fillRect(pointer.x - repelRadius, pointer.y - repelRadius, repelRadius * 2, repelRadius * 2);
+        context.restore();
 
-        if (pointer.active) {
-          const deltaX = particle.x - pointer.x;
-          const deltaY = particle.y - pointer.y;
-          const distance = Math.max(1, Math.hypot(deltaX, deltaY));
-          if (distance < repelRadius) {
-            const force = (1 - distance / repelRadius) * 2.2;
-            particle.vx += (deltaX / distance) * force;
-            particle.vy += (deltaY / distance) * force;
-          }
-        }
-
-        particle.vx += (targetX - particle.x) * 0.025;
-        particle.vy += (targetY - particle.y) * 0.025;
-        particle.vx *= 0.86;
-        particle.vy *= 0.86;
-        particle.x += particle.vx;
-        particle.y += particle.vy;
-
-        context.font = `600 ${particle.size}px "Courier New", monospace`;
         context.textAlign = "center";
         context.textBaseline = "middle";
-        context.fillStyle = particle.orange ? "rgba(255, 116, 72, 0.9)" : "rgba(245, 240, 237, 0.56)";
-        context.fillText(particle.digit, particle.x, particle.y);
-      });
-    };
+        portraitDigits.forEach((particle) => {
+          const deltaX = particle.baseX - pointer.x;
+          const deltaY = particle.baseY - pointer.y;
+          const distance = Math.max(1, Math.hypot(deltaX, deltaY));
+          if (distance < repelRadius * 1.12) {
+            const displacement = Math.max(0, repelRadius - distance) * 0.82;
+            const targetX = particle.baseX + (deltaX / distance) * displacement;
+            const targetY = particle.baseY + (deltaY / distance) * displacement;
+            particle.x += (targetX - particle.x) * 0.2;
+            particle.y += (targetY - particle.y) * 0.2;
+            context.font = `600 ${particle.size}px "Courier New", monospace`;
+            context.fillStyle = particle.orange
+              ? `rgba(255, 116, 72, ${particle.alpha})`
+              : `rgba(242, 238, 235, ${particle.alpha})`;
+            context.fillText(particle.digit, particle.x, particle.y);
+          } else {
+            particle.x += (particle.baseX - particle.x) * 0.14;
+            particle.y += (particle.baseY - particle.y) * 0.14;
+          }
+        });
+      }
+
+      wordAlpha += ((pointer.active ? 1 : 0) - wordAlpha) * 0.08;
+      if (wordDigits.length && wordAlpha > 0.01) {
+        context.save();
+        context.globalCompositeOperation = "source-over";
+        const veil = context.createRadialGradient(width / 2, height / 2, 0, width / 2, height / 2, width * 0.46);
+        veil.addColorStop(0, `rgba(0,0,0,${0.82 * wordAlpha})`);
+        veil.addColorStop(0.7, `rgba(0,0,0,${0.42 * wordAlpha})`);
+        veil.addColorStop(1, "rgba(0,0,0,0)");
+        context.fillStyle = veil;
+        context.fillRect(0, height * 0.3, width, height * 0.4);
+        context.textAlign = "center";
+        context.textBaseline = "middle";
+        const wordDigitSize = Math.max(7, Math.min(10, width / 48));
+        wordDigits.forEach((particle) => {
+          particle.vx += (particle.targetX - particle.x) * 0.045;
+          particle.vy += (particle.targetY - particle.y) * 0.045;
+          particle.vx *= 0.78;
+          particle.vy *= 0.78;
+          particle.x += particle.vx;
+          particle.y += particle.vy;
+          context.font = `800 ${wordDigitSize}px "Courier New", monospace`;
+          context.fillStyle = particle.orange
+            ? `rgba(255, 116, 72, ${0.96 * wordAlpha})`
+            : `rgba(255, 244, 238, ${0.88 * wordAlpha})`;
+          context.fillText(particle.digit, particle.x, particle.y);
+        });
+        context.restore();
+      }
+
+      if (!pointer.active && pointer.influence < 0.01) {
+        portraitDigits.forEach((particle) => {
+          particle.x = particle.baseX;
+          particle.y = particle.baseY;
+        });
+      }
+    }
 
     const animateParticles = (time: number) => {
-      drawParticles(time);
+      renderFrame(time);
       animationFrame = window.requestAnimationFrame(animateParticles);
     };
     const updatePointer = (event: PointerEvent) => {
@@ -496,14 +656,26 @@ export default function Home() {
       pointer.x = event.clientX - rect.left;
       pointer.y = event.clientY - rect.top;
       pointer.active = true;
+      const nextWordIndex = (pointer.y < height / 2 ? 0 : 2) + (pointer.x < width / 2 ? 0 : 1);
+      if (nextWordIndex !== activeWordIndex) {
+        activeWordIndex = nextWordIndex;
+        buildWord(t.portraitWords[nextWordIndex]);
+      }
     };
     const clearPointer = () => { pointer.active = false; };
+
+    const onSourceLoad = () => {
+      sourceReady = true;
+      buildBinaryPortrait();
+    };
+    sourceImage.addEventListener("load", onSourceLoad);
+    sourceImage.src = "/self-portrait-binary.png";
 
     const resizeObserver = new ResizeObserver(resizeCanvas);
     resizeObserver.observe(frame);
     resizeCanvas();
 
-    if (reducedMotion) drawParticles(0);
+    if (reducedMotion) renderFrame(0);
     else {
       frame.addEventListener("pointermove", updatePointer);
       frame.addEventListener("pointerleave", clearPointer);
@@ -514,9 +686,10 @@ export default function Home() {
       resizeObserver.disconnect();
       frame.removeEventListener("pointermove", updatePointer);
       frame.removeEventListener("pointerleave", clearPointer);
+      sourceImage.removeEventListener("load", onSourceLoad);
       window.cancelAnimationFrame(animationFrame);
     };
-  }, []);
+  }, [language, t.portraitWords]);
 
   useEffect(() => {
     document.documentElement.classList.add("motion-ready");
@@ -682,7 +855,6 @@ export default function Home() {
                   </div>
                   <div className="ascii-art-frame">
                     <div className="ascii-reveal" style={{ clipPath: `inset(0 0 ${100 - asciiRevealPercent}% 0)` }}>
-                      <img src="/self-portrait-binary.png" alt="" width="1024" height="1024" />
                       <canvas ref={binaryCanvasRef} className="ascii-binary-canvas" />
                     </div>
                     {!asciiRenderComplete && revealedAsciiLines > 0 ? <i className="ascii-scan-line" style={{ top: `${asciiRevealPercent}%` }} /> : null}
