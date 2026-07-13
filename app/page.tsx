@@ -406,17 +406,8 @@ export default function Home() {
       x: number;
       y: number;
       size: number;
+      scale: number;
       alpha: number;
-      digit: "0" | "1";
-      orange: boolean;
-    };
-    type WordDigit = {
-      x: number;
-      y: number;
-      targetX: number;
-      targetY: number;
-      vx: number;
-      vy: number;
       digit: "0" | "1";
       orange: boolean;
     };
@@ -426,20 +417,20 @@ export default function Home() {
     const sourceImage = new Image();
     const baseLayer = document.createElement("canvas");
     const sampleLayer = document.createElement("canvas");
-    const wordLayer = document.createElement("canvas");
     const baseContext = baseLayer.getContext("2d", { alpha: true });
     const sampleContext = sampleLayer.getContext("2d", { willReadFrequently: true });
-    const wordContext = wordLayer.getContext("2d", { willReadFrequently: true });
-    if (!baseContext || !sampleContext || !wordContext) return;
+    if (!baseContext || !sampleContext) return;
 
     let portraitDigits: PortraitDigit[] = [];
-    let wordDigits: WordDigit[] = [];
     let animationFrame = 0;
     let width = 0;
     let height = 0;
     let sourceReady = false;
     let activeWordIndex = -1;
-    let wordAlpha = 0;
+    let activeWord = "";
+    let activeBinarySequence = "";
+    let overlayAlpha = 0;
+    let sequenceProgress = 0;
 
     const createRandom = (initialSeed: number) => {
       let seed = initialSeed;
@@ -448,6 +439,11 @@ export default function Home() {
         return (seed - 1) / 2147483646;
       };
     };
+
+    const toBinarySequence = (word: string) =>
+      Array.from(word)
+        .map((character) => character.charCodeAt(0).toString(2).padStart(8, "0"))
+        .join(" ");
 
     const drawPortraitBase = () => {
       baseContext.clearRect(0, 0, width, height);
@@ -476,8 +472,6 @@ export default function Home() {
       for (let y = 0; y < height; y += step) {
         for (let x = 0; x < width; x += step) {
           let strongest = 0;
-          let strongestRed = 0;
-          let strongestGreen = 0;
           for (let sampleY = y; sampleY < Math.min(y + step, height); sampleY += 2) {
             for (let sampleX = x; sampleX < Math.min(x + step, width); sampleX += 2) {
               const index = (Math.floor(sampleY) * sampleLayer.width + Math.floor(sampleX)) * 4;
@@ -485,11 +479,7 @@ export default function Home() {
               const green = pixels[index + 1] ?? 0;
               const blue = pixels[index + 2] ?? 0;
               const brightness = red * 0.3 + green * 0.59 + blue * 0.11;
-              if (brightness > strongest) {
-                strongest = brightness;
-                strongestRed = red;
-                strongestGreen = green;
-              }
+              if (brightness > strongest) strongest = brightness;
             }
           }
 
@@ -502,9 +492,10 @@ export default function Home() {
               x: baseX,
               y: baseY,
               size: Math.max(3, step * 1.06),
+              scale: 1,
               alpha: Math.min(1, 0.22 + strongest / 245),
               digit: random() > 0.5 ? "1" : "0",
-              orange: strongestRed > strongestGreen * 1.28 && strongestRed > 75,
+              orange: random() > 0.93,
             });
           }
         }
@@ -512,46 +503,7 @@ export default function Home() {
 
       portraitDigits = nextDigits;
       drawPortraitBase();
-      if (reducedMotion) renderFrame(0);
-    };
-
-    const buildWord = (word: string) => {
-      wordLayer.width = Math.max(1, Math.round(width));
-      wordLayer.height = Math.max(1, Math.round(height));
-      wordContext.clearRect(0, 0, width, height);
-      const fontSize = Math.max(24, Math.min(54, width / Math.max(5.2, word.length * 0.58)));
-      wordContext.fillStyle = "#fff";
-      wordContext.font = `800 ${fontSize}px "Courier New", monospace`;
-      wordContext.textAlign = "center";
-      wordContext.textBaseline = "middle";
-      wordContext.fillText(word, width / 2, height / 2);
-      const pixels = wordContext.getImageData(0, 0, wordLayer.width, wordLayer.height).data;
-      const sampleStep = Math.max(6, Math.round(fontSize / 5.8));
-      const random = createRandom(8101 + activeWordIndex * 97);
-      const targets: Array<{ x: number; y: number }> = [];
-
-      for (let y = 0; y < height; y += sampleStep) {
-        for (let x = 0; x < width; x += sampleStep) {
-          const alpha = pixels[(Math.floor(y) * wordLayer.width + Math.floor(x)) * 4 + 3] ?? 0;
-          if (alpha > 100) targets.push({ x, y });
-        }
-      }
-
-      wordDigits = targets.map((target) => {
-        const angle = random() * Math.PI * 2;
-        const distance = 30 + random() * Math.max(70, width * 0.28);
-        return {
-          x: pointer.x + Math.cos(angle) * distance,
-          y: pointer.y + Math.sin(angle) * distance,
-          targetX: target.x,
-          targetY: target.y,
-          vx: 0,
-          vy: 0,
-          digit: random() > 0.5 ? "1" : "0",
-          orange: random() > 0.28,
-        };
-      });
-      wordAlpha = 0;
+      if (reducedMotion) renderFrame();
     };
 
     const resizeCanvas = () => {
@@ -565,11 +517,14 @@ export default function Home() {
       baseLayer.width = Math.max(1, Math.round(width));
       baseLayer.height = Math.max(1, Math.round(height));
       activeWordIndex = -1;
-      wordDigits = [];
+      activeWord = "";
+      activeBinarySequence = "";
+      overlayAlpha = 0;
+      sequenceProgress = 0;
       buildBinaryPortrait();
     };
 
-    function renderFrame(time: number) {
+    function renderFrame() {
       context.clearRect(0, 0, width, height);
       context.drawImage(baseLayer, 0, 0, width, height);
       pointer.influence += ((pointer.active ? 1 : 0) - pointer.influence) * 0.12;
@@ -593,12 +548,15 @@ export default function Home() {
           const deltaY = particle.baseY - pointer.y;
           const distance = Math.max(1, Math.hypot(deltaX, deltaY));
           if (distance < repelRadius * 1.12) {
-            const displacement = Math.max(0, repelRadius - distance) * 0.82;
+            const proximity = Math.max(0, 1 - distance / (repelRadius * 1.12));
+            const displacement = proximity * proximity * repelRadius * 0.58;
             const targetX = particle.baseX + (deltaX / distance) * displacement;
             const targetY = particle.baseY + (deltaY / distance) * displacement;
-            particle.x += (targetX - particle.x) * 0.2;
-            particle.y += (targetY - particle.y) * 0.2;
-            context.font = `600 ${particle.size}px "Courier New", monospace`;
+            const targetScale = 1 + proximity * 1.85;
+            particle.x += (targetX - particle.x) * 0.13;
+            particle.y += (targetY - particle.y) * 0.13;
+            particle.scale += (targetScale - particle.scale) * 0.14;
+            context.font = `600 ${particle.size * particle.scale}px "Courier New", monospace`;
             context.fillStyle = particle.orange
               ? `rgba(255, 116, 72, ${particle.alpha})`
               : `rgba(242, 238, 235, ${particle.alpha})`;
@@ -606,36 +564,53 @@ export default function Home() {
           } else {
             particle.x += (particle.baseX - particle.x) * 0.14;
             particle.y += (particle.baseY - particle.y) * 0.14;
+            particle.scale += (1 - particle.scale) * 0.14;
           }
         });
       }
 
-      wordAlpha += ((pointer.active ? 1 : 0) - wordAlpha) * 0.08;
-      if (wordDigits.length && wordAlpha > 0.01) {
+      const overlayTarget = pointer.active && activeWord ? 1 : 0;
+      overlayAlpha += (overlayTarget - overlayAlpha) * 0.09;
+      sequenceProgress += (overlayTarget - sequenceProgress) * 0.075;
+      if (activeBinarySequence && overlayAlpha > 0.01) {
         context.save();
         context.globalCompositeOperation = "source-over";
         const veil = context.createRadialGradient(width / 2, height / 2, 0, width / 2, height / 2, width * 0.46);
-        veil.addColorStop(0, `rgba(0,0,0,${0.82 * wordAlpha})`);
-        veil.addColorStop(0.7, `rgba(0,0,0,${0.42 * wordAlpha})`);
+        veil.addColorStop(0, `rgba(0,0,0,${0.88 * overlayAlpha})`);
+        veil.addColorStop(0.68, `rgba(0,0,0,${0.48 * overlayAlpha})`);
         veil.addColorStop(1, "rgba(0,0,0,0)");
         context.fillStyle = veil;
-        context.fillRect(0, height * 0.3, width, height * 0.4);
-        context.textAlign = "center";
+        context.fillRect(0, height * 0.32, width, height * 0.36);
+
+        let binaryFontSize = Math.max(4.4, Math.min(7.5, width / 52));
+        context.font = `700 ${binaryFontSize}px "Courier New", monospace`;
+        const maximumBinaryWidth = width * 0.88;
+        const measuredBinaryWidth = context.measureText(activeBinarySequence).width;
+        if (measuredBinaryWidth > maximumBinaryWidth) {
+          binaryFontSize = Math.max(3.8, binaryFontSize * (maximumBinaryWidth / measuredBinaryWidth));
+          context.font = `700 ${binaryFontSize}px "Courier New", monospace`;
+        }
+        const fullBinaryWidth = context.measureText(activeBinarySequence).width;
+        const visibleBinaryLength = Math.floor(activeBinarySequence.length * Math.min(1, sequenceProgress * 1.14));
+        const visibleBinary = activeBinarySequence.slice(0, visibleBinaryLength);
+        context.textAlign = "left";
         context.textBaseline = "middle";
-        const wordDigitSize = Math.max(7, Math.min(10, width / 48));
-        wordDigits.forEach((particle) => {
-          particle.vx += (particle.targetX - particle.x) * 0.045;
-          particle.vy += (particle.targetY - particle.y) * 0.045;
-          particle.vx *= 0.78;
-          particle.vy *= 0.78;
-          particle.x += particle.vx;
-          particle.y += particle.vy;
-          context.font = `800 ${wordDigitSize}px "Courier New", monospace`;
-          context.fillStyle = particle.orange
-            ? `rgba(255, 116, 72, ${0.96 * wordAlpha})`
-            : `rgba(255, 244, 238, ${0.88 * wordAlpha})`;
-          context.fillText(particle.digit, particle.x, particle.y);
-        });
+        context.fillStyle = `rgba(255, 116, 72, ${0.98 * overlayAlpha})`;
+        context.fillText(visibleBinary, (width - fullBinaryWidth) / 2, height / 2 - 18);
+
+        const readableAlpha = Math.max(0, Math.min(1, (sequenceProgress - 0.28) / 0.72)) * overlayAlpha;
+        if (readableAlpha > 0.01) {
+          const wordFontSize = Math.max(22, Math.min(42, width / 9.5));
+          const wordScale = 0.92 + readableAlpha * 0.08;
+          context.translate(width / 2, height / 2 + 18);
+          context.scale(wordScale, wordScale);
+          context.font = `800 ${wordFontSize}px Arial, sans-serif`;
+          context.textAlign = "center";
+          context.fillStyle = `rgba(255, 247, 242, ${readableAlpha})`;
+          context.shadowColor = `rgba(255, 116, 72, ${0.6 * readableAlpha})`;
+          context.shadowBlur = 12;
+          context.fillText(activeWord, 0, 0);
+        }
         context.restore();
       }
 
@@ -643,12 +618,13 @@ export default function Home() {
         portraitDigits.forEach((particle) => {
           particle.x = particle.baseX;
           particle.y = particle.baseY;
+          particle.scale = 1;
         });
       }
     }
 
-    const animateParticles = (time: number) => {
-      renderFrame(time);
+    const animateParticles = () => {
+      renderFrame();
       animationFrame = window.requestAnimationFrame(animateParticles);
     };
     const updatePointer = (event: PointerEvent) => {
@@ -659,7 +635,10 @@ export default function Home() {
       const nextWordIndex = (pointer.y < height / 2 ? 0 : 2) + (pointer.x < width / 2 ? 0 : 1);
       if (nextWordIndex !== activeWordIndex) {
         activeWordIndex = nextWordIndex;
-        buildWord(t.portraitWords[nextWordIndex]);
+        activeWord = t.portraitWords[nextWordIndex] ?? "";
+        activeBinarySequence = toBinarySequence(activeWord);
+        overlayAlpha = 0;
+        sequenceProgress = 0;
       }
     };
     const clearPointer = () => { pointer.active = false; };
@@ -669,16 +648,17 @@ export default function Home() {
       buildBinaryPortrait();
     };
     sourceImage.addEventListener("load", onSourceLoad);
-    sourceImage.src = "/self-portrait-binary.png";
+    sourceImage.src = "/self-portrait-source-v2.png";
 
     const resizeObserver = new ResizeObserver(resizeCanvas);
     resizeObserver.observe(frame);
     resizeCanvas();
 
-    if (reducedMotion) renderFrame(0);
+    if (reducedMotion) renderFrame();
     else {
       frame.addEventListener("pointermove", updatePointer);
       frame.addEventListener("pointerleave", clearPointer);
+      frame.addEventListener("pointercancel", clearPointer);
       animationFrame = window.requestAnimationFrame(animateParticles);
     }
 
@@ -686,6 +666,7 @@ export default function Home() {
       resizeObserver.disconnect();
       frame.removeEventListener("pointermove", updatePointer);
       frame.removeEventListener("pointerleave", clearPointer);
+      frame.removeEventListener("pointercancel", clearPointer);
       sourceImage.removeEventListener("load", onSourceLoad);
       window.cancelAnimationFrame(animationFrame);
     };

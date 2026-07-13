@@ -60,24 +60,33 @@ test("removes all disposable starter preview code", async () => {
   await assert.rejects(access(new URL("../app/_sites-preview/SkeletonPreview.tsx", import.meta.url)));
 });
 
-test("renders the generated binary portrait line by line", async () => {
+test("renders the photographic binary portrait with interactive zoom and readable words", async () => {
   const [page, css, portrait] = await Promise.all([
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
-    readFile(new URL("../public/self-portrait-binary.png", import.meta.url)),
+    readFile(new URL("../public/self-portrait-source-v2.png", import.meta.url)),
   ]);
 
   assert.equal(portrait.subarray(0, 8).toString("hex"), "89504e470d0a1a0a");
   assert.ok(portrait.length > 1_000_000);
-  assert.match(page, /sourceImage\.src = "\/self-portrait-binary\.png"/);
+  assert.match(page, /sourceImage\.src = "\/self-portrait-source-v2\.png"/);
+  assert.doesNotMatch(page, /sourceImage\.src = "\/self-portrait-binary\.png"/);
   assert.match(page, /<canvas ref=\{binaryCanvasRef\} className="ascii-binary-canvas" \/>/);
   assert.match(page, /sampleContext\.getImageData/);
   assert.match(page, /const step = Math\.max\(3, Math\.round\(width \/ 118\)\)/);
   assert.match(page, /portraitWords: \["CURIOSO", "CRIATIVO", "INVENTIVO", "PERSISTENTE"\]/);
-  assert.match(page, /const buildWord = \(word: string\)/);
+  assert.match(page, /const toBinarySequence = \(word: string\)/);
+  assert.match(page, /activeBinarySequence = toBinarySequence\(activeWord\)/);
+  assert.match(page, /context\.fillText\(visibleBinary, \(width - fullBinaryWidth\) \/ 2, height \/ 2 - 18\)/);
+  assert.match(page, /context\.fillText\(activeWord, 0, 0\)/);
   assert.match(page, /frame\.addEventListener\("pointermove", updatePointer\)/);
+  assert.match(page, /frame\.addEventListener\("pointerleave", clearPointer\)/);
+  assert.match(page, /frame\.addEventListener\("pointercancel", clearPointer\)/);
   assert.match(page, /distance < repelRadius/);
   assert.match(page, /particle\.baseX \+ \(deltaX \/ distance\) \* displacement/);
+  assert.match(page, /const targetScale = 1 \+ proximity \* 1\.85/);
+  assert.match(page, /particle\.scale \+= \(targetScale - particle\.scale\) \* 0\.14/);
+  assert.doesNotMatch(page, /type WordDigit|wordDigits|wordLayer|buildWord/);
   assert.doesNotMatch(page, /fetch\("\/ascii-art\.txt"\)|<pre ref=\{asciiPreRef\}/);
   assert.match(page, /const asciiCommand = 'const self = "Humberto Zizi"; render\(self\);'/);
   assert.match(page, /const portraitLineCount = 100/);
