@@ -162,6 +162,12 @@ export default function Home() {
 
         while (lines.length && !lines[0].trim()) lines.shift();
         while (lines.length && !lines.at(-1)?.trim()) lines.pop();
+
+        const firstDenseLine = lines.findIndex(
+          (line) => line.replace(/\s/g, "").length >= 20,
+        );
+        if (firstDenseLine > 0) lines.splice(0, firstDenseLine);
+
         setAsciiArt(lines.join("\n"));
       })
       .catch(() => {

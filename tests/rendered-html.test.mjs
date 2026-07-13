@@ -68,7 +68,10 @@ test("ships and safely contains the supplied ASCII self portrait", async () => {
   assert.equal(lines.length, 100);
   assert.equal(Math.max(...lines.map((line) => line.length)), 200);
   assert.match(page, /fetch\("\/ascii-art\.txt"\)/);
+  assert.match(page, /const firstDenseLine = lines\.findIndex/);
   assert.match(page, /new ResizeObserver\(requestFit\)/);
   assert.match(css, /\.ascii-art-frame\s*\{[\s\S]*?overflow:\s*clip/);
+  assert.match(css, /\.ascii-art-frame\s*\{[\s\S]*?aspect-ratio:\s*8\s*\/\s*5/);
+  assert.doesNotMatch(css, /min-height:\s*(?:390|430|300|250|220)px/);
   assert.match(css, /\.ascii-art-frame pre\s*\{[\s\S]*?white-space:\s*pre/);
 });
