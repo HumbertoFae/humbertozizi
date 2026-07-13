@@ -411,13 +411,16 @@ export default function Home() {
 
     const sourceImage = new Image();
     const sampleCanvas = document.createElement("canvas");
+    const baseCanvas = document.createElement("canvas");
     const sampleContext = sampleCanvas.getContext("2d", { willReadFrequently: true });
+    const baseContext = baseCanvas.getContext("2d");
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const digitChangeInterval = 110;
-    if (!sampleContext) return;
+    if (!sampleContext || !baseContext) return;
 
     let width = 0;
     let height = 0;
+    let pixelRatio = 1;
     let cellWidth = 3;
     let cellHeight = 3;
     let digitSize = 3;
@@ -425,7 +428,16 @@ export default function Home() {
     let isFrameVisible = true;
     let tick = 0;
     let timer = 0;
+    let hoverAnimationFrame = 0;
     let cells: BinaryCell[] = [];
+    const pointer = {
+      targetX: 0,
+      targetY: 0,
+      x: 0,
+      y: 0,
+      active: false,
+      influence: 0,
+    };
 
     const createRandom = (initialSeed: number) => {
       let seed = initialSeed;
@@ -435,27 +447,122 @@ export default function Home() {
       };
     };
 
-    const prepareBinaryContext = () => {
-      context.font = `900 ${digitSize}px Consolas, "Courier New", monospace`;
-      context.textAlign = "center";
-      context.textBaseline = "middle";
+    const prepareBinaryContext = (targetContext: CanvasRenderingContext2D) => {
+      targetContext.font = `900 ${digitSize}px Consolas, "Courier New", monospace`;
+      targetContext.textAlign = "center";
+      targetContext.textBaseline = "middle";
     };
 
-    const drawBinaryCell = (cell: BinaryCell, clearCell = false) => {
+    const drawBinaryCell = (
+      targetContext: CanvasRenderingContext2D,
+      cell: BinaryCell,
+      x = cell.x,
+      y = cell.y,
+      clearCell = false,
+      opacity = 1,
+    ) => {
       if (clearCell) {
-        context.fillStyle = "#000";
-        context.fillRect(cell.column * cellWidth, cell.row * cellHeight, cellWidth, cellHeight);
+        targetContext.fillStyle = "#000";
+        targetContext.fillRect(cell.column * cellWidth, cell.row * cellHeight, cellWidth, cellHeight);
       }
-      context.fillStyle = cell.color;
-      context.fillText(cell.digit, cell.x, cell.y);
+      targetContext.globalAlpha = opacity;
+      targetContext.fillStyle = cell.color;
+      targetContext.fillText(cell.digit, x, y);
+      targetContext.globalAlpha = 1;
+    };
+
+    const copyBinaryBase = () => {
+      context.save();
+      context.setTransform(1, 0, 0, 1, 0, 0);
+      context.clearRect(0, 0, canvas.width, canvas.height);
+      context.drawImage(baseCanvas, 0, 0);
+      context.restore();
     };
 
     const drawBinaryPortrait = () => {
-      context.clearRect(0, 0, width, height);
-      context.fillStyle = "#000";
-      context.fillRect(0, 0, width, height);
-      prepareBinaryContext();
-      cells.forEach((cell) => drawBinaryCell(cell));
+      baseContext.clearRect(0, 0, width, height);
+      baseContext.fillStyle = "#000";
+      baseContext.fillRect(0, 0, width, height);
+      prepareBinaryContext(baseContext);
+      cells.forEach((cell) => drawBinaryCell(baseContext, cell));
+      copyBinaryBase();
+    };
+
+    const renderHoverPortrait = () => {
+      copyBinaryBase();
+      if (pointer.influence <= 0.001 || width < 1 || height < 1) return;
+
+      const maximumRevealRadius = Math.max(68, Math.min(110, width * 0.27));
+      const revealRadius = maximumRevealRadius * Math.sqrt(pointer.influence);
+      context.save();
+      context.globalCompositeOperation = "destination-out";
+      const reveal = context.createRadialGradient(
+        pointer.x,
+        pointer.y,
+        0,
+        pointer.x,
+        pointer.y,
+        revealRadius,
+      );
+      reveal.addColorStop(0, "rgba(0, 0, 0, 1)");
+      reveal.addColorStop(0.52, "rgba(0, 0, 0, 1)");
+      reveal.addColorStop(1, "rgba(0, 0, 0, 0)");
+      context.fillStyle = reveal;
+      context.fillRect(
+        pointer.x - revealRadius,
+        pointer.y - revealRadius,
+        revealRadius * 2,
+        revealRadius * 2,
+      );
+      context.restore();
+
+      prepareBinaryContext(context);
+      const repelRadius = revealRadius * 1.08;
+      cells.forEach((cell) => {
+        const deltaX = cell.x - pointer.x;
+        const deltaY = cell.y - pointer.y;
+        const distance = Math.hypot(deltaX, deltaY);
+        if (distance >= repelRadius || distance < revealRadius * 0.52) return;
+
+        const proximity = Math.max(0, 1 - distance / repelRadius);
+        const smoothProximity = proximity * proximity * (3 - 2 * proximity);
+        const displacement = reducedMotion
+          ? 0
+          : smoothProximity * pointer.influence * Math.min(9, cellWidth * 1.15);
+        const fallbackAngle = cell.phase * 2.39996;
+        const directionX = distance > 0.01 ? deltaX / distance : Math.cos(fallbackAngle);
+        const directionY = distance > 0.01 ? deltaY / distance : Math.sin(fallbackAngle);
+        drawBinaryCell(
+          context,
+          cell,
+          cell.x + directionX * displacement,
+          cell.y + directionY * displacement,
+          false,
+          0.78,
+        );
+      });
+    };
+
+    const animateHoverPortrait = () => {
+      hoverAnimationFrame = 0;
+      pointer.x += (pointer.targetX - pointer.x) * 0.22;
+      pointer.y += (pointer.targetY - pointer.y) * 0.22;
+      const easing = pointer.active ? 0.11 : 0.075;
+      pointer.influence += ((pointer.active ? 1 : 0) - pointer.influence) * easing;
+      renderHoverPortrait();
+
+      if (pointer.active || pointer.influence > 0.005) {
+        hoverAnimationFrame = window.requestAnimationFrame(animateHoverPortrait);
+      } else {
+        pointer.influence = 0;
+        copyBinaryBase();
+        frame.classList.remove("is-revealing-photo");
+      }
+    };
+
+    const startHoverAnimation = () => {
+      if (hoverAnimationFrame || reducedMotion || document.hidden) return;
+      hoverAnimationFrame = window.requestAnimationFrame(animateHoverPortrait);
     };
 
     const buildBinaryPortrait = () => {
@@ -538,24 +645,37 @@ export default function Home() {
 
     const resizeCanvas = () => {
       const rect = frame.getBoundingClientRect();
-      const pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
+      pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
       width = rect.width;
       height = rect.height;
       canvas.width = Math.max(1, Math.round(width * pixelRatio));
       canvas.height = Math.max(1, Math.round(height * pixelRatio));
+      baseCanvas.width = canvas.width;
+      baseCanvas.height = canvas.height;
       context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+      baseContext.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
       buildBinaryPortrait();
+      if (pointer.active || pointer.influence > 0.005) startHoverAnimation();
     };
 
     const changeBinaryDigits = () => {
       tick += 1;
-      prepareBinaryContext();
+      let changed = false;
+      prepareBinaryContext(baseContext);
       cells.forEach((cell, index) => {
         if (cell.mutable && (index * 7 + cell.phase + tick * 3) % 5 === 0) {
           cell.digit = cell.digit === "0" ? "1" : "0";
-          drawBinaryCell(cell, true);
+          drawBinaryCell(baseContext, cell, cell.x, cell.y, true);
+          changed = true;
         }
       });
+      if (!changed) return;
+      if (pointer.active || pointer.influence > 0.005) {
+        if (reducedMotion) renderHoverPortrait();
+        else startHoverAnimation();
+      } else {
+        copyBinaryBase();
+      }
     };
 
     const stopDigitTimer = () => {
@@ -581,7 +701,45 @@ export default function Home() {
       cells = [];
       drawBinaryPortrait();
     };
-    const onVisibilityChange = () => updateDigitTimer();
+    const onVisibilityChange = () => {
+      updateDigitTimer();
+      if (document.hidden && hoverAnimationFrame) {
+        window.cancelAnimationFrame(hoverAnimationFrame);
+        hoverAnimationFrame = 0;
+      } else if (!document.hidden && (pointer.active || pointer.influence > 0.005)) {
+        startHoverAnimation();
+      }
+    };
+    const updatePointer = (event: PointerEvent) => {
+      if (event.pointerType === "touch") return;
+      const rect = frame.getBoundingClientRect();
+      pointer.targetX = event.clientX - rect.left;
+      pointer.targetY = event.clientY - rect.top;
+      if (!pointer.active && pointer.influence <= 0.005) {
+        pointer.x = pointer.targetX;
+        pointer.y = pointer.targetY;
+      }
+      pointer.active = true;
+      frame.classList.add("is-revealing-photo");
+      if (reducedMotion) {
+        pointer.x = pointer.targetX;
+        pointer.y = pointer.targetY;
+        pointer.influence = 1;
+        renderHoverPortrait();
+      } else {
+        startHoverAnimation();
+      }
+    };
+    const clearPointer = () => {
+      pointer.active = false;
+      if (reducedMotion) {
+        pointer.influence = 0;
+        copyBinaryBase();
+        frame.classList.remove("is-revealing-photo");
+      } else {
+        startHoverAnimation();
+      }
+    };
 
     sourceImage.addEventListener("load", onSourceLoad);
     sourceImage.addEventListener("error", onSourceError);
@@ -598,6 +756,9 @@ export default function Home() {
     resizeObserver.observe(frame);
     visibilityObserver.observe(frame);
     document.addEventListener("visibilitychange", onVisibilityChange);
+    frame.addEventListener("pointermove", updatePointer);
+    frame.addEventListener("pointerleave", clearPointer);
+    frame.addEventListener("pointercancel", clearPointer);
     resizeCanvas();
     updateDigitTimer();
 
@@ -605,9 +766,14 @@ export default function Home() {
       resizeObserver.disconnect();
       visibilityObserver.disconnect();
       document.removeEventListener("visibilitychange", onVisibilityChange);
+      frame.removeEventListener("pointermove", updatePointer);
+      frame.removeEventListener("pointerleave", clearPointer);
+      frame.removeEventListener("pointercancel", clearPointer);
       sourceImage.removeEventListener("load", onSourceLoad);
       sourceImage.removeEventListener("error", onSourceError);
       stopDigitTimer();
+      if (hoverAnimationFrame) window.cancelAnimationFrame(hoverAnimationFrame);
+      frame.classList.remove("is-revealing-photo");
     };
   }, []);
 
@@ -775,6 +941,7 @@ export default function Home() {
                   </div>
                   <div className="ascii-art-frame">
                     <div className="ascii-reveal" style={{ clipPath: `inset(0 0 ${100 - asciiRevealPercent}% 0)` }}>
+                      <img className="ascii-color-portrait" src="/self-portrait-source-v2.png" alt="" width="1254" height="1254" />
                       <canvas ref={binaryPortraitRef} className="ascii-binary-canvas" />
                     </div>
                     {!asciiRenderComplete && revealedAsciiLines > 0 ? <i className="ascii-scan-line" style={{ top: `${asciiRevealPercent}%` }} /> : null}

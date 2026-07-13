@@ -646,22 +646,40 @@ section {
   inset: 0;
   z-index: 2;
   background: repeating-linear-gradient(to bottom, transparent 0 3px, rgba(255, 255, 255, 0.018) 3px 4px);
+  opacity: 1;
+  transition: opacity 180ms ease;
   pointer-events: none;
   content: "";
 }
 
+.ascii-art-frame.is-revealing-photo::before { opacity: 0; }
+
 .ascii-reveal {
   position: absolute;
   inset: 0;
+  background: #000;
   will-change: clip-path;
 }
 
+.ascii-color-portrait,
 .ascii-binary-canvas {
+  position: absolute;
+  inset: 0;
   display: block;
   width: 100%;
   height: 100%;
-  background: #000;
   pointer-events: none;
+}
+
+.ascii-color-portrait {
+  z-index: 0;
+  object-fit: cover;
+  object-position: center;
+}
+
+.ascii-binary-canvas {
+  z-index: 1;
+  background: transparent;
 }
 
 .ascii-cursor {
