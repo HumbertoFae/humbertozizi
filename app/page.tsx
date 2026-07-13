@@ -326,6 +326,7 @@ export default function Home() {
   const [revealedAsciiLines, setRevealedAsciiLines] = useState(0);
   const [language, setLanguage] = useState<Language>("pt");
   const timelineRef = useRef<HTMLElement>(null);
+  const binaryCanvasRef = useRef<HTMLCanvasElement>(null);
   const t = translations[language];
   const localizedProjects = projects[language];
   const asciiRenderComplete = revealedAsciiLines >= portraitLineCount;
@@ -389,6 +390,132 @@ export default function Home() {
 
     animationFrame = window.requestAnimationFrame(animateConsole);
     return () => window.cancelAnimationFrame(animationFrame);
+  }, []);
+
+  useEffect(() => {
+    const canvas = binaryCanvasRef.current;
+    const frame = canvas?.closest<HTMLElement>(".ascii-art-frame");
+    const context = canvas?.getContext("2d");
+    if (!canvas || !frame || !context) return;
+
+    type BinaryParticle = {
+      baseX: number;
+      baseY: number;
+      x: number;
+      y: number;
+      vx: number;
+      vy: number;
+      size: number;
+      phase: number;
+      digit: "0" | "1";
+      orange: boolean;
+    };
+
+    const pointer = { x: 0, y: 0, active: false };
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    let particles: BinaryParticle[] = [];
+    let animationFrame = 0;
+    let width = 0;
+    let height = 0;
+
+    const resizeCanvas = () => {
+      const rect = frame.getBoundingClientRect();
+      const pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
+      width = rect.width;
+      height = rect.height;
+      canvas.width = Math.max(1, Math.round(width * pixelRatio));
+      canvas.height = Math.max(1, Math.round(height * pixelRatio));
+      context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+
+      let seed = 7421;
+      const random = () => {
+        seed = (seed * 16807) % 2147483647;
+        return (seed - 1) / 2147483646;
+      };
+      const particleCount = Math.max(38, Math.min(82, Math.round((width * height) / 3400)));
+      particles = Array.from({ length: particleCount }, () => {
+        const x = random() * width;
+        const y = random() * height;
+        return {
+          baseX: x,
+          baseY: y,
+          x,
+          y,
+          vx: 0,
+          vy: 0,
+          size: 7 + random() * 7,
+          phase: random() * Math.PI * 2,
+          digit: random() > 0.5 ? "1" : "0",
+          orange: random() > 0.62,
+        };
+      });
+    };
+
+    const drawParticles = (time: number) => {
+      context.clearRect(0, 0, width, height);
+      const repelRadius = Math.max(58, Math.min(92, width * 0.2));
+
+      particles.forEach((particle) => {
+        const idleX = Math.sin(time * 0.001 + particle.phase) * 1.5;
+        const idleY = Math.cos(time * 0.0008 + particle.phase) * 1.2;
+        const targetX = particle.baseX + idleX;
+        const targetY = particle.baseY + idleY;
+
+        if (pointer.active) {
+          const deltaX = particle.x - pointer.x;
+          const deltaY = particle.y - pointer.y;
+          const distance = Math.max(1, Math.hypot(deltaX, deltaY));
+          if (distance < repelRadius) {
+            const force = (1 - distance / repelRadius) * 2.2;
+            particle.vx += (deltaX / distance) * force;
+            particle.vy += (deltaY / distance) * force;
+          }
+        }
+
+        particle.vx += (targetX - particle.x) * 0.025;
+        particle.vy += (targetY - particle.y) * 0.025;
+        particle.vx *= 0.86;
+        particle.vy *= 0.86;
+        particle.x += particle.vx;
+        particle.y += particle.vy;
+
+        context.font = `600 ${particle.size}px "Courier New", monospace`;
+        context.textAlign = "center";
+        context.textBaseline = "middle";
+        context.fillStyle = particle.orange ? "rgba(255, 116, 72, 0.9)" : "rgba(245, 240, 237, 0.56)";
+        context.fillText(particle.digit, particle.x, particle.y);
+      });
+    };
+
+    const animateParticles = (time: number) => {
+      drawParticles(time);
+      animationFrame = window.requestAnimationFrame(animateParticles);
+    };
+    const updatePointer = (event: PointerEvent) => {
+      const rect = frame.getBoundingClientRect();
+      pointer.x = event.clientX - rect.left;
+      pointer.y = event.clientY - rect.top;
+      pointer.active = true;
+    };
+    const clearPointer = () => { pointer.active = false; };
+
+    const resizeObserver = new ResizeObserver(resizeCanvas);
+    resizeObserver.observe(frame);
+    resizeCanvas();
+
+    if (reducedMotion) drawParticles(0);
+    else {
+      frame.addEventListener("pointermove", updatePointer);
+      frame.addEventListener("pointerleave", clearPointer);
+      animationFrame = window.requestAnimationFrame(animateParticles);
+    }
+
+    return () => {
+      resizeObserver.disconnect();
+      frame.removeEventListener("pointermove", updatePointer);
+      frame.removeEventListener("pointerleave", clearPointer);
+      window.cancelAnimationFrame(animationFrame);
+    };
   }, []);
 
   useEffect(() => {
@@ -556,6 +683,7 @@ export default function Home() {
                   <div className="ascii-art-frame">
                     <div className="ascii-reveal" style={{ clipPath: `inset(0 0 ${100 - asciiRevealPercent}% 0)` }}>
                       <img src="/self-portrait-binary.png" alt="" width="1024" height="1024" />
+                      <canvas ref={binaryCanvasRef} className="ascii-binary-canvas" />
                     </div>
                     {!asciiRenderComplete && revealedAsciiLines > 0 ? <i className="ascii-scan-line" style={{ top: `${asciiRevealPercent}%` }} /> : null}
                   </div>
