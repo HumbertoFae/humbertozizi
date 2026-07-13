@@ -127,6 +127,7 @@ button {
   font-size: 1.18rem;
   font-weight: 740;
   letter-spacing: -0.055em;
+  white-space: nowrap;
 }
 
 .brand b {
@@ -161,11 +162,48 @@ button {
   animation: caret-blink 850ms steps(1, end) infinite;
 }
 
+.topbar-tools {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-right: 20px;
+}
+
+.language-switch {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #686d72;
+  font: 650 0.64rem var(--font-geist-mono), monospace;
+}
+
+.language-switch button {
+  min-width: 28px;
+  min-height: 28px;
+  padding: 0;
+  border: 1px solid transparent;
+  color: inherit;
+  background: transparent;
+  font: inherit;
+  cursor: pointer;
+}
+
+.language-switch button:hover,
+.language-switch button:focus-visible {
+  border-color: rgba(255, 116, 72, 0.45);
+  color: var(--orange-soft);
+  outline: none;
+}
+
+.language-switch button.active {
+  color: var(--orange);
+}
+
 .availability {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-right: 24px;
+  margin-right: 0;
   padding: 8px 12px;
   border: 1px solid rgba(126, 232, 173, 0.25);
   border-radius: 999px;
@@ -1619,9 +1657,10 @@ section {
 
 @media (max-width: 760px) {
   :root { --topbar: 58px; --statusbar: 30px; }
-  .topbar { grid-template-columns: auto minmax(0, 1fr) auto; }
+  .topbar { grid-template-columns: auto minmax(0, 1fr) auto auto; }
   .brand { border-right: 0; padding: 0 12px; font-size: 1rem; }
   .command-link { justify-self: end; padding: 0 8px; font-size: 0.68rem; }
+  .topbar-tools { gap: 0; margin-right: 0; }
   .availability { display: none; }
   .menu-button { display: block; }
   .workspace { display: block; }
@@ -1700,7 +1739,7 @@ section {
 
 @media (max-width: 480px) {
   .command-link { display: none; }
-  .topbar { grid-template-columns: 1fr auto; }
+  .topbar { grid-template-columns: 1fr auto auto; }
   .readme-copy h1 { font-size: 3.4rem; }
   .readme-copy .hash { display: block; margin-bottom: 9px; }
   .section-heading > p { font-size: 0.78rem; }

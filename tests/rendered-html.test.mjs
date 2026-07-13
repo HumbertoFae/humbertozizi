@@ -81,3 +81,20 @@ test("ships and safely contains the supplied ASCII self portrait", async () => {
   assert.doesNotMatch(css, /min-height:\s*(?:390|430|300|250|220)px/);
   assert.match(css, /\.ascii-art-frame pre\s*\{[\s\S]*?white-space:\s*pre/);
 });
+
+test("offers English with automatic regional language detection", async () => {
+  const [page, css] = await Promise.all([
+    readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
+  ]);
+
+  assert.match(page, /type Language = "pt" \| "en"/);
+  assert.match(page, /navigator\.languages\?\.\[0\] \?\? navigator\.language/);
+  assert.match(page, /startsWith\("pt"\) \? "pt" : "en"/);
+  assert.match(page, /localStorage\.setItem\("portfolio-language", nextLanguage\)/);
+  assert.match(page, />PT<\/button>/);
+  assert.match(page, />EN<\/button>/);
+  assert.match(page, /Hello,/);
+  assert.match(page, /available for projects/);
+  assert.match(css, /\.language-switch button\.active/);
+});
