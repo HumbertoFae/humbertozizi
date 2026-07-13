@@ -436,7 +436,7 @@ export default function Home() {
     };
 
     const prepareBinaryContext = () => {
-      context.font = `600 ${digitSize}px "Courier New", monospace`;
+      context.font = `900 ${digitSize}px Consolas, "Courier New", monospace`;
       context.textAlign = "center";
       context.textBaseline = "middle";
     };
@@ -461,7 +461,7 @@ export default function Home() {
     const buildBinaryPortrait = () => {
       if (!sourceReady || width < 1 || height < 1) return;
 
-      const columns = Math.max(76, Math.min(100, Math.round(width / 3.7)));
+      const columns = Math.max(56, Math.min(72, Math.round(width / 5)));
       const rows = Math.max(1, Math.round(columns * (height / width)));
       sampleCanvas.width = columns;
       sampleCanvas.height = rows;
@@ -499,7 +499,7 @@ export default function Home() {
       const nextCells: BinaryCell[] = [];
       cellWidth = width / columns;
       cellHeight = height / rows;
-      digitSize = Math.max(3, Math.min(cellWidth, cellHeight) * 1.05);
+      digitSize = Math.max(5, Math.min(cellWidth, cellHeight) * 1.18);
 
       for (let row = 0; row < rows; row += 1) {
         for (let column = 0; column < columns; column += 1) {
