@@ -403,9 +403,8 @@ export default function Home() {
       row: number;
       x: number;
       y: number;
-      alpha: number;
+      color: string;
       digit: "0" | "1";
-      accent: boolean;
       phase: number;
       mutable: boolean;
     };
@@ -447,9 +446,7 @@ export default function Home() {
         context.fillStyle = "#000";
         context.fillRect(cell.column * cellWidth, cell.row * cellHeight, cellWidth, cellHeight);
       }
-      context.fillStyle = cell.accent
-        ? `rgba(255, 116, 72, ${cell.alpha})`
-        : `rgba(244, 240, 237, ${cell.alpha})`;
+      context.fillStyle = cell.color;
       context.fillText(cell.digit, cell.x, cell.y);
     };
 
@@ -464,7 +461,7 @@ export default function Home() {
     const buildBinaryPortrait = () => {
       if (!sourceReady || width < 1 || height < 1) return;
 
-      const columns = Math.max(82, Math.min(116, Math.round(width / 3)));
+      const columns = Math.max(76, Math.min(100, Math.round(width / 3.7)));
       const rows = Math.max(1, Math.round(columns * (height / width)));
       sampleCanvas.width = columns;
       sampleCanvas.height = rows;
@@ -502,7 +499,7 @@ export default function Home() {
       const nextCells: BinaryCell[] = [];
       cellWidth = width / columns;
       cellHeight = height / rows;
-      digitSize = Math.max(2.4, Math.min(cellWidth, cellHeight) * 0.9);
+      digitSize = Math.max(3, Math.min(cellWidth, cellHeight) * 1.05);
 
       for (let row = 0; row < rows; row += 1) {
         for (let column = 0; column < columns; column += 1) {
@@ -511,20 +508,26 @@ export default function Home() {
           const green = pixels[index + 1] ?? 0;
           const blue = pixels[index + 2] ?? 0;
           const luminance = (red * 0.2126 + green * 0.7152 + blue * 0.0722) / 255;
-          const occupancyRandom = random();
-          if (luminance <= 0.045) continue;
-
-          const tone = Math.pow(Math.min(1, Math.max(0, (luminance - 0.045) / 0.955)), 0.72);
-          if (occupancyRandom > 0.34 + tone * 0.66) continue;
+          const portraitPixel = luminance > 0.025;
+          const colorVariation = random();
+          const darkColorBoost = luminance < 0.22 ? 1.38 : 1.06;
+          const portraitRed = Math.min(255, Math.max(18, Math.round(red * darkColorBoost)));
+          const portraitGreen = Math.min(255, Math.max(18, Math.round(green * darkColorBoost)));
+          const portraitBlue = Math.min(255, Math.max(18, Math.round(blue * darkColorBoost)));
+          const portraitAlpha = Math.min(1, 0.76 + luminance * 0.24);
+          const cellColor = portraitPixel
+            ? `rgba(${portraitRed}, ${portraitGreen}, ${portraitBlue}, ${portraitAlpha})`
+            : colorVariation > 0.96
+              ? "rgba(255, 116, 72, 0.28)"
+              : "rgba(118, 124, 128, 0.2)";
 
           nextCells.push({
             column,
             row,
             x: (column + 0.5) * cellWidth,
             y: (row + 0.5) * cellHeight,
-            alpha: 0.16 + tone * 0.84,
+            color: cellColor,
             digit: random() > 0.5 ? "1" : "0",
-            accent: random() > 0.91,
             phase: Math.floor(random() * 17),
             mutable: random() < 0.32,
           });

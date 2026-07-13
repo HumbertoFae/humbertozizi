@@ -76,6 +76,11 @@ test("renders the portrait only through frequently changing binary digits", asyn
   assert.match(page, /sampleContext\.getImageData/);
   assert.doesNotMatch(page, /context\.drawImage\(sourceImage/);
   assert.match(page, /context\.fillText\(cell\.digit, cell\.x, cell\.y\)/);
+  assert.match(page, /const columns = Math\.max\(76, Math\.min\(100, Math\.round\(width \/ 3\.7\)\)\)/);
+  assert.match(page, /digitSize = Math\.max\(3, Math\.min\(cellWidth, cellHeight\) \* 1\.05\)/);
+  assert.match(page, /const portraitPixel = luminance > 0\.025/);
+  assert.match(page, /color: cellColor/);
+  assert.doesNotMatch(page, /occupancyRandom|if \(luminance <= 0\.045\) continue/);
   assert.match(page, /const digitChangeInterval = 110/);
   assert.match(page, /window\.setInterval\(changeBinaryDigits, digitChangeInterval\)/);
   assert.match(page, /cell\.digit = cell\.digit === "0" \? "1" : "0"/);
