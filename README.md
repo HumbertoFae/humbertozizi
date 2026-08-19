@@ -3,6 +3,8 @@
 Portfólio pessoal de Humberto Zizi — projetos, experiências digitais, sites,
 aplicativos e ferramentas desenvolvidas com criatividade e tecnologia.
 
+Publicado em [humbertozizi.dev](https://humbertozizi.dev).
+
 ## Desenvolvimento local
 
 Requer Node.js `>=22.13.0`.
