@@ -199,21 +199,6 @@ button {
   color: var(--orange);
 }
 
-.availability {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-right: 0;
-  padding: 8px 12px;
-  border: 1px solid rgba(126, 232, 173, 0.25);
-  border-radius: 999px;
-  color: var(--muted-light);
-  font: 500 0.68rem var(--font-geist-mono), monospace;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-}
-
-.availability i,
 .live-dot::before {
   width: 6px;
   height: 6px;
@@ -372,11 +357,33 @@ section {
   color: var(--orange);
   background: var(--paper);
   font: 600 0.68rem var(--font-geist-mono), monospace;
+  transform-origin: top left;
+  transition: opacity 180ms ease 180ms, transform 360ms cubic-bezier(0.4, 0, 0.2, 1), width 360ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.section-tab i {
+.section-tab button {
+  display: grid;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
   color: #6d6c68;
-  font-style: normal;
+  background: transparent;
+  font: 700 0.78rem/1 var(--font-geist-mono), monospace;
+  cursor: pointer;
+  place-items: center;
+  transition: color 160ms ease, background 160ms ease, transform 160ms ease;
+}
+
+.section-tab button:hover,
+.section-tab button:focus-visible {
+  color: var(--orange);
+  background: rgba(255, 116, 72, 0.1);
+  outline: none;
+}
+
+.section-tab button:active {
+  transform: scale(0.86);
 }
 
 .hero-canvas {
@@ -384,6 +391,31 @@ section {
   grid-template-columns: minmax(0, 1fr);
   gap: 0;
   align-items: center;
+  transform-origin: top center;
+  transition: clip-path 420ms cubic-bezier(0.65, 0, 0.35, 1), opacity 260ms ease, transform 420ms cubic-bezier(0.65, 0, 0.35, 1);
+}
+
+.readme-is-closing .section-tab {
+  width: 36px;
+  opacity: 0;
+  transform: translateY(-8px) scaleX(0.25);
+}
+
+.readme-is-closing .hero-canvas {
+  clip-path: inset(0 0 100% 0);
+  opacity: 0;
+  transform: translateY(-12px) scaleY(0.96);
+}
+
+.readme-is-closing .section-tab,
+.readme-is-closing .section-tab button,
+.readme-is-closing .hero-canvas {
+  pointer-events: none;
+}
+
+.readme-is-closed .section-tab,
+.readme-is-closed .hero-canvas {
+  visibility: hidden;
 }
 
 .readme-panel {
@@ -1743,7 +1775,6 @@ section {
   .brand { border-right: 0; padding: 0 12px; font-size: 1rem; }
   .command-link { justify-self: end; padding: 0 8px; font-size: 0.68rem; }
   .topbar-tools { gap: 0; margin-right: 0; }
-  .availability { display: none; }
   .menu-button { display: block; }
   .workspace { display: block; }
   .repo-sidebar {

@@ -2,6 +2,9 @@
 
 import { useEffect, useRef, useState } from "react";
 
+const publicBasePath = (process.env.NEXT_PUBLIC_BASE_PATH ?? "").replace(/\/$/, "");
+const portraitSource = `${publicBasePath}/self-portrait-source-v2.png`;
+
 type Language = "pt" | "en";
 
 type Project = {
@@ -23,7 +26,7 @@ const translations = {
     skip: "Ir para o conteúdo",
     backHome: "Voltar ao início",
     explore: "explorar projetos",
-    available: "disponível para projetos",
+    closeReadme: "Fechar README e ir para projetos",
     openNavigation: "Abrir navegação",
     explorer: "Explorador do portfólio",
     sections: "Seções do portfólio",
@@ -95,7 +98,7 @@ const translations = {
     skip: "Skip to content",
     backHome: "Back to home",
     explore: "explore projects",
-    available: "available for projects",
+    closeReadme: "Close README and go to projects",
     openNavigation: "Open navigation",
     explorer: "Portfolio explorer",
     sections: "Portfolio sections",
@@ -321,12 +324,15 @@ function ProjectVisual({ type, title, copy }: { type: Project["visual"]; title: 
 
 export default function Home() {
   const [activeSection, setActiveSection] = useState("inicio");
+  const [readmeState, setReadmeState] = useState<"open" | "closing" | "closed">("open");
   const [menuOpen, setMenuOpen] = useState(false);
   const [typedAsciiCommand, setTypedAsciiCommand] = useState("");
   const [revealedAsciiLines, setRevealedAsciiLines] = useState(0);
   const [language, setLanguage] = useState<Language>("pt");
   const timelineRef = useRef<HTMLElement>(null);
   const binaryPortraitRef = useRef<HTMLCanvasElement>(null);
+  const readmeCloseTimerRef = useRef<number | null>(null);
+  const readmeCloseInProgressRef = useRef(false);
   const t = translations[language];
   const localizedProjects = projects[language];
   const asciiRenderComplete = revealedAsciiLines >= portraitLineCount;
@@ -336,6 +342,46 @@ export default function Home() {
     setLanguage(nextLanguage);
     window.localStorage.setItem("portfolio-language", nextLanguage);
   };
+
+  const openReadme = () => {
+    if (readmeCloseTimerRef.current !== null) {
+      window.clearTimeout(readmeCloseTimerRef.current);
+      readmeCloseTimerRef.current = null;
+    }
+    readmeCloseInProgressRef.current = false;
+    setReadmeState("open");
+  };
+
+  const closeReadme = () => {
+    if (readmeState !== "open") return;
+
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    readmeCloseInProgressRef.current = true;
+    setReadmeState("closing");
+    readmeCloseTimerRef.current = window.setTimeout(() => {
+      setReadmeState("closed");
+      setActiveSection("projetos");
+      window.requestAnimationFrame(() => {
+        const projectsSection = document.getElementById("projetos");
+        if (!projectsSection) return;
+
+        window.history.pushState(null, "", "#projetos");
+        const previousScrollBehavior = document.documentElement.style.scrollBehavior;
+        document.documentElement.style.scrollBehavior = "auto";
+        window.scrollTo(0, projectsSection.offsetTop);
+        window.requestAnimationFrame(() => {
+          document.documentElement.style.scrollBehavior = previousScrollBehavior;
+        });
+      });
+      readmeCloseTimerRef.current = null;
+    }, reducedMotion ? 0 : 440);
+  };
+
+  useEffect(() => () => {
+    if (readmeCloseTimerRef.current !== null) {
+      window.clearTimeout(readmeCloseTimerRef.current);
+    }
+  }, []);
 
   useEffect(() => {
     const savedLanguage = window.localStorage.getItem("portfolio-language");
@@ -407,6 +453,10 @@ export default function Home() {
       digit: "0" | "1";
       phase: number;
       mutable: boolean;
+      accentEligible: boolean;
+      accentProgress: number;
+      accentSpeed: number;
+      accentIntensity: number;
     };
 
     const sourceImage = new Image();
@@ -453,6 +503,24 @@ export default function Home() {
       targetContext.textBaseline = "middle";
     };
 
+    const drawBinaryAccent = (
+      targetContext: CanvasRenderingContext2D,
+      cell: BinaryCell,
+      x = cell.x,
+      y = cell.y,
+      opacity = 1,
+    ) => {
+      if (cell.accentProgress < 0) return;
+      const accentOpacity = Math.sin(Math.PI * cell.accentProgress) * cell.accentIntensity;
+      targetContext.globalAlpha = opacity * accentOpacity;
+      targetContext.fillStyle = "#ff7448";
+      targetContext.shadowColor = "rgba(255, 116, 72, 0.45)";
+      targetContext.shadowBlur = Math.max(2, digitSize * 0.42);
+      targetContext.fillText(cell.digit, x, y);
+      targetContext.shadowBlur = 0;
+      targetContext.globalAlpha = 1;
+    };
+
     const drawBinaryCell = (
       targetContext: CanvasRenderingContext2D,
       cell: BinaryCell,
@@ -460,6 +528,7 @@ export default function Home() {
       y = cell.y,
       clearCell = false,
       opacity = 1,
+      includeAccent = true,
     ) => {
       if (clearCell) {
         targetContext.fillStyle = "#000";
@@ -469,6 +538,7 @@ export default function Home() {
       targetContext.fillStyle = cell.color;
       targetContext.fillText(cell.digit, x, y);
       targetContext.globalAlpha = 1;
+      if (includeAccent) drawBinaryAccent(targetContext, cell, x, y, opacity);
     };
 
     const copyBinaryBase = () => {
@@ -479,20 +549,30 @@ export default function Home() {
       context.restore();
     };
 
+    const renderFlatPortrait = () => {
+      copyBinaryBase();
+      prepareBinaryContext(context);
+      cells.forEach((cell) => drawBinaryAccent(context, cell));
+    };
+
     const drawBinaryPortrait = () => {
       baseContext.clearRect(0, 0, width, height);
       baseContext.fillStyle = "#000";
       baseContext.fillRect(0, 0, width, height);
       prepareBinaryContext(baseContext);
-      cells.forEach((cell) => drawBinaryCell(baseContext, cell));
-      copyBinaryBase();
+      cells.forEach((cell) => drawBinaryCell(baseContext, cell, cell.x, cell.y, false, 1, false));
+      renderFlatPortrait();
     };
 
     const renderHoverPortrait = () => {
       copyBinaryBase();
-      if (pointer.influence <= 0.001 || width < 1 || height < 1) return;
+      if (pointer.influence <= 0.001 || width < 1 || height < 1) {
+        prepareBinaryContext(context);
+        cells.forEach((cell) => drawBinaryAccent(context, cell));
+        return;
+      }
 
-      const maximumRevealRadius = Math.max(68, Math.min(110, width * 0.27));
+      const maximumRevealRadius = Math.max(84, Math.min(140, width * 0.34));
       const revealRadius = maximumRevealRadius * Math.sqrt(pointer.influence);
       context.save();
       context.globalCompositeOperation = "destination-out";
@@ -539,7 +619,32 @@ export default function Home() {
           cell.y + directionY * displacement,
           false,
           0.78,
+          false,
         );
+      });
+
+      cells.forEach((cell) => {
+        if (cell.accentProgress < 0) return;
+        const deltaX = cell.x - pointer.x;
+        const deltaY = cell.y - pointer.y;
+        const distance = Math.hypot(deltaX, deltaY);
+        let accentX = cell.x;
+        let accentY = cell.y;
+
+        if (distance >= revealRadius * 0.52 && distance < repelRadius) {
+          const proximity = Math.max(0, 1 - distance / repelRadius);
+          const smoothProximity = proximity * proximity * (3 - 2 * proximity);
+          const displacement = reducedMotion
+            ? 0
+            : smoothProximity * pointer.influence * Math.min(9, cellWidth * 1.15);
+          const fallbackAngle = cell.phase * 2.39996;
+          const directionX = distance > 0.01 ? deltaX / distance : Math.cos(fallbackAngle);
+          const directionY = distance > 0.01 ? deltaY / distance : Math.sin(fallbackAngle);
+          accentX += directionX * displacement;
+          accentY += directionY * displacement;
+        }
+
+        drawBinaryAccent(context, cell, accentX, accentY, Math.max(0.82, pointer.influence));
       });
     };
 
@@ -555,7 +660,7 @@ export default function Home() {
         hoverAnimationFrame = window.requestAnimationFrame(animateHoverPortrait);
       } else {
         pointer.influence = 0;
-        copyBinaryBase();
+        renderFlatPortrait();
         frame.classList.remove("is-revealing-photo");
       }
     };
@@ -568,7 +673,7 @@ export default function Home() {
     const buildBinaryPortrait = () => {
       if (!sourceReady || width < 1 || height < 1) return;
 
-      const columns = Math.max(56, Math.min(72, Math.round(width / 5)));
+      const columns = Math.max(40, Math.min(52, Math.round(width / 6.2)));
       const rows = Math.max(1, Math.round(columns * (height / width)));
       sampleCanvas.width = columns;
       sampleCanvas.height = rows;
@@ -606,7 +711,7 @@ export default function Home() {
       const nextCells: BinaryCell[] = [];
       cellWidth = width / columns;
       cellHeight = height / rows;
-      digitSize = Math.max(5, Math.min(cellWidth, cellHeight) * 1.18);
+      digitSize = Math.max(6.5, Math.min(cellWidth, cellHeight) * 1.08);
 
       for (let row = 0; row < rows; row += 1) {
         for (let column = 0; column < columns; column += 1) {
@@ -635,6 +740,10 @@ export default function Home() {
             digit: random() > 0.5 ? "1" : "0",
             phase: Math.floor(random() * 17),
             mutable: random() < 0.32,
+            accentEligible: random() < (portraitPixel ? 0.24 : 0.1),
+            accentProgress: reducedMotion && random() < (portraitPixel ? 0.003 : 0.001) ? 0.5 : -1,
+            accentSpeed: 0,
+            accentIntensity: 0.62 + random() * 0.3,
           });
         }
       }
@@ -661,20 +770,52 @@ export default function Home() {
     const changeBinaryDigits = () => {
       tick += 1;
       let changed = false;
+      let activeAccentCount = 0;
       prepareBinaryContext(baseContext);
       cells.forEach((cell, index) => {
+        let cellChanged = false;
         if (cell.mutable && (index * 7 + cell.phase + tick * 3) % 5 === 0) {
           cell.digit = cell.digit === "0" ? "1" : "0";
-          drawBinaryCell(baseContext, cell, cell.x, cell.y, true);
+          cellChanged = true;
+        }
+
+        if (cell.accentProgress >= 0) {
+          cell.accentProgress += cell.accentSpeed;
+          if (cell.accentProgress >= 1) {
+            cell.accentProgress = -1;
+            cell.accentSpeed = 0;
+          } else {
+            activeAccentCount += 1;
+          }
+          cellChanged = true;
+        }
+
+        if (cellChanged) {
+          drawBinaryCell(baseContext, cell, cell.x, cell.y, true, 1, false);
           changed = true;
         }
       });
+
+      const maximumAccentCount = Math.max(4, Math.min(10, Math.round(cells.length / 550)));
+      if (activeAccentCount < maximumAccentCount && Math.random() < 0.42) {
+        const maximumAttempts = 18;
+        for (let attempt = 0; attempt < maximumAttempts; attempt += 1) {
+          const candidate = cells[Math.floor(Math.random() * cells.length)];
+          if (!candidate?.accentEligible || candidate.accentProgress >= 0) continue;
+
+          candidate.accentProgress = 0.015;
+          candidate.accentSpeed = 1 / (16 + Math.random() * 18);
+          candidate.accentIntensity = 0.62 + Math.random() * 0.3;
+          changed = true;
+          break;
+        }
+      }
       if (!changed) return;
       if (pointer.active || pointer.influence > 0.005) {
         if (reducedMotion) renderHoverPortrait();
         else startHoverAnimation();
       } else {
-        copyBinaryBase();
+        renderFlatPortrait();
       }
     };
 
@@ -734,7 +875,7 @@ export default function Home() {
       pointer.active = false;
       if (reducedMotion) {
         pointer.influence = 0;
-        copyBinaryBase();
+        renderFlatPortrait();
         frame.classList.remove("is-revealing-photo");
       } else {
         startHoverAnimation();
@@ -743,7 +884,7 @@ export default function Home() {
 
     sourceImage.addEventListener("load", onSourceLoad);
     sourceImage.addEventListener("error", onSourceError);
-    sourceImage.src = "/self-portrait-source-v2.png";
+    sourceImage.src = portraitSource;
 
     const resizeObserver = new ResizeObserver(resizeCanvas);
     const visibilityObserver = new IntersectionObserver(
@@ -788,7 +929,16 @@ export default function Home() {
         const visible = entries
           .filter((entry) => entry.isIntersecting)
           .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
-        if (visible?.target.id) setActiveSection(visible.target.id);
+        if (visible?.target.id) {
+          setActiveSection(visible.target.id);
+          if (
+            visible.target.id === "inicio"
+            && window.scrollY <= 120
+            && !readmeCloseInProgressRef.current
+          ) {
+            setReadmeState("open");
+          }
+        }
       },
       { rootMargin: "-28% 0px -55% 0px", threshold: [0.05, 0.2, 0.5] },
     );
@@ -826,6 +976,11 @@ export default function Home() {
     };
 
     const onScroll = () => {
+      if (readmeCloseInProgressRef.current && window.scrollY > 120) {
+        readmeCloseInProgressRef.current = false;
+      } else if (!readmeCloseInProgressRef.current && window.scrollY <= 120) {
+        setReadmeState("open");
+      }
       if (!frame) frame = window.requestAnimationFrame(updateTimeline);
     };
 
@@ -857,7 +1012,7 @@ export default function Home() {
       <a className="skip-link" href="#conteudo">{t.skip}</a>
 
       <header className="topbar">
-        <a className="brand" href="#inicio" aria-label={t.backHome}>
+        <a className="brand" href="#inicio" aria-label={t.backHome} onClick={openReadme}>
           <span>humbertozizi</span><b>.dev</b>
         </a>
         <a className="command-link" href="#projetos">
@@ -869,7 +1024,6 @@ export default function Home() {
             <span>/</span>
             <button type="button" className={language === "en" ? "active" : ""} aria-pressed={language === "en"} onClick={() => chooseLanguage("en")}>EN</button>
           </div>
-          <div className="availability"><i aria-hidden="true" /> {t.available}</div>
         </div>
         <button
           className="menu-button"
@@ -892,7 +1046,10 @@ export default function Home() {
                 href={`#${item.id}`}
                 className={activeSection === item.id ? "active" : ""}
                 aria-current={activeSection === item.id ? "page" : undefined}
-                onClick={() => setMenuOpen(false)}
+                onClick={() => {
+                  setMenuOpen(false);
+                  if (item.id === "inicio") openReadme();
+                }}
               >
                 <span className={`file-icon file-${item.id}`} aria-hidden="true">{item.icon}</span>
                 {item.file}
@@ -907,8 +1064,11 @@ export default function Home() {
         </aside>
 
         <main id="conteudo">
-          <section id="inicio" className="hero-section" data-section>
-            <div className="section-tab" aria-hidden="true"><span>README.md</span><i>×</i></div>
+          <section id="inicio" className={`hero-section readme-is-${readmeState}`} data-section>
+            <div className="section-tab">
+              <span>README.md</span>
+              <button type="button" aria-label={t.closeReadme} onClick={closeReadme}>×</button>
+            </div>
             <div className="hero-canvas">
               <article className="readme-panel">
                 <div className="line-numbers" aria-hidden="true">01<br />02<br />03<br />04<br />05<br />06<br />07<br />08<br />09<br />10<br />11<br />12</div>
@@ -941,7 +1101,7 @@ export default function Home() {
                   </div>
                   <div className="ascii-art-frame">
                     <div className="ascii-reveal" style={{ clipPath: `inset(0 0 ${100 - asciiRevealPercent}% 0)` }}>
-                      <img className="ascii-color-portrait" src="/self-portrait-source-v2.png" alt="" width="1254" height="1254" />
+                      <img className="ascii-color-portrait" src={portraitSource} alt="" width="1254" height="1254" />
                       <canvas ref={binaryPortraitRef} className="ascii-binary-canvas" />
                     </div>
                     {!asciiRenderComplete && revealedAsciiLines > 0 ? <i className="ascii-scan-line" style={{ top: `${asciiRevealPercent}%` }} /> : null}
