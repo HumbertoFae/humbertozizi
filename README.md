@@ -20,4 +20,4 @@ npm run build:pages
 ```
 
 O primeiro comando mantém o build original do Sites. O segundo gera a versão
-estática publicada automaticamente pelo GitHub Pages.
+estática usada pelo GitHub Pages.
