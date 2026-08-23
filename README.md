@@ -23,3 +23,10 @@ npm run build:pages
 
 O primeiro comando mantém o build original do Sites. O segundo gera a versão
 estática usada pelo GitHub Pages.
+
+## Estrutura
+
+- `app/`: páginas, componentes e estilos.
+- `public/`: imagens e arquivos públicos.
+- `tests/`: validações automatizadas.
+- `worker/` e `build/`: integração de publicação do Sites.

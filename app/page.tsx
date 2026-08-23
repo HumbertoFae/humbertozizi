@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 
 const publicBasePath = (process.env.NEXT_PUBLIC_BASE_PATH ?? "").replace(/\/$/, "");
 const portraitSource = `${publicBasePath}/self-portrait-source-v2.png`;
 
 type Language = "pt" | "en";
+type StudioMode = "final" | "experience" | "decisions" | "concept" | "difficulties" | "dashboard" | "info";
 
 type Project = {
   hash: string;
@@ -16,7 +17,14 @@ type Project = {
   detail: string;
   stack: string[];
   status: "done" | "building" | "experiment";
-  visual: "editor" | "overlay" | "extension" | "site";
+  visual: "store" | "discount" | "extension" | "site";
+  stages: {
+    title: string;
+    description: string;
+    deliverable: string;
+    code?: string;
+    errors?: string[];
+  }[];
 };
 
 const translations = {
@@ -61,6 +69,23 @@ const translations = {
     projectPreview: "Prévia visual do projeto",
     technologies: "Tecnologias de",
     inspectProject: "inspecionar projeto",
+    openStudio: "abrir no studio",
+    studioTitle: "Project Studio",
+    studioJourney: "ETAPAS DO PROJETO",
+    studioPreview: "versão_final.preview",
+    studioStage: "etapa",
+    studioDeliverable: "entrega",
+    studioFinal: "Versão final interativa",
+    studioFinalCopy: "Use os controles abaixo para experimentar uma versão funcional do projeto.",
+    studioConsole: "TERMINAL",
+    studioReady: "projeto carregado sem erros",
+    studioClose: "Fechar Project Studio",
+    studioOpenFinal: "abrir versão final",
+    studioBackStages: "ver etapas",
+    studioBootOpening: "abrindo projeto",
+    studioBootLoading: "carregando componentes e versão final",
+    studioBootReady: "workspace pronto",
+    studioBootTransfer: "abrindo janela em",
     aboutLabel: "SOBRE MIM",
     aboutTitle: "Programar é meu jeito de dar forma às ideias.",
     aboutText: "Gosto de entender o problema, reduzir o ruído e construir uma experiência que pareça simples — mesmo quando existe muita engenharia por trás.",
@@ -79,7 +104,7 @@ const translations = {
     backReadme: "voltar ao README",
     waiting: "aguardando sua mensagem",
     errors: "0 erros",
-    location: "São Paulo, BR",
+    location: "Espírito Santo, BR",
     visual: {
       editorTitle: <>Construa.<br />Visualize.<br />Publique.</>,
       start: "começar →",
@@ -133,6 +158,23 @@ const translations = {
     projectPreview: "Visual preview of project",
     technologies: "Technologies used in",
     inspectProject: "inspect project",
+    openStudio: "open in studio",
+    studioTitle: "Project Studio",
+    studioJourney: "PROJECT STAGES",
+    studioPreview: "final_version.preview",
+    studioStage: "stage",
+    studioDeliverable: "deliverable",
+    studioFinal: "Interactive final version",
+    studioFinalCopy: "Use the controls below to try a functional version of the project.",
+    studioConsole: "TERMINAL",
+    studioReady: "project loaded without errors",
+    studioClose: "Close Project Studio",
+    studioOpenFinal: "open final version",
+    studioBackStages: "view stages",
+    studioBootOpening: "opening project",
+    studioBootLoading: "loading components and final version",
+    studioBootReady: "workspace ready",
+    studioBootTransfer: "opening window in",
     aboutLabel: "ABOUT ME",
     aboutTitle: "Programming is how I give shape to ideas.",
     aboutText: "I like to understand the problem, reduce the noise, and build an experience that feels simple — even when there is a lot of engineering behind it.",
@@ -151,7 +193,7 @@ const translations = {
     backReadme: "back to README",
     waiting: "waiting for your message",
     errors: "0 errors",
-    location: "São Paulo, BR",
+    location: "Espírito Santo, BR",
     visual: {
       editorTitle: <>Build.<br />Visualize.<br />Publish.</>,
       start: "start →",
@@ -178,33 +220,54 @@ const navItems = [
   { id: "contato", file: "contact.sh", icon: ">_" },
 ];
 
+const projectFacts: Record<Project["visual"], { primaryLanguage: string; category: string; runtime: string; liveUrl?: string }> = {
+  store: { primaryLanguage: "TypeScript", category: "E-commerce", runtime: "React + Vite", liveUrl: "https://fotoimasstore.com.br/" },
+  discount: { primaryLanguage: "TypeScript", category: "Comparador de preços", runtime: "React + Vite + Node.js", liveUrl: "https://menordesconto.com.br/" },
+  extension: { primaryLanguage: "JavaScript", category: "Browser extension", runtime: "Chrome MV3" },
+  site: { primaryLanguage: "JavaScript", category: "Website", runtime: "HTML + CSS" },
+};
+
 const projects: Record<Language, Project[]> = {
   pt: [
   {
-    hash: "a1f40c2",
+    hash: "f1m4g24",
     year: "2026",
-    branch: "main",
-    title: "NoCode Studio",
+    branch: "store/demo",
+    title: "Foto Ímãs Store",
     description:
-      "Um editor visual para transformar ideias em páginas, componentes e experiências interativas.",
+      "E-commerce completo de ímãs personalizados, com compra guiada, envio de fotos e painel administrativo.",
     detail:
-      "O projeto conecta uma biblioteca de blocos, propriedades organizadas e uma ponte de IA ao resultado que aparece no editor.",
-    stack: ["Next.js", "React", "TypeScript", "AI bridge"],
-    status: "building",
-    visual: "editor",
+      "A experiência reúne catálogo, personalização, carrinho, checkout, rastreamento, analytics e gestão em uma interface leve e responsiva.",
+    stack: ["React", "TypeScript", "Vite", "Node.js"],
+    status: "done",
+    visual: "store",
+    stages: [
+      { title: "Arquitetura do produto", description: "Definição completa da jornada entre vitrine, catálogo, personalização de fotos, carrinho, checkout, frete e rastreamento. A área pública e o dashboard administrativo foram separados em módulos conectados pelo mesmo domínio de produtos, clientes e pedidos.", deliverable: "Mapa funcional da loja, serviços e dashboard", code: "type StoreDomain = {\n  catalog: Product[];\n  checkout: CheckoutFlow;\n  dashboard: AdminWorkspace;\n};\n\nconst routes = [\"/\", \"/produto/:id\", \"/dashboard\"];", errors: ["TS2307: módulo de catálogo ainda não conectado", "ROUTE404: dashboard sem rota registrada", "DATA001: modelo de pedidos incompleto", "API000: serviços externos aguardando adaptadores"] },
+      { title: "Loja e experiência de compra", description: "Construção responsiva da home, produtos, detalhes, carrinho e configuração das fotos com recorte, zoom e rotação. O fluxo também contempla endereço, opções de entrega, pagamento visual e acompanhamento do pedido.", deliverable: "Vitrine e compra guiada totalmente navegáveis", code: "function Storefront() {\n  const cart = useCart();\n  return (\n    <Catalog onAdd={cart.add}>\n      <PhotoConfigurator crop zoom rotate />\n      <Checkout shipping payment />\n    </Catalog>\n  );\n}", errors: ["STATE014: recorte ainda não persistido no carrinho", "SHIP002: cálculo de frete usando fallback local"] },
+      { title: "Dashboard e operação", description: "Implementação do painel com visão geral, receita, pedidos, clientes, produtos, analytics, SEO e configurações. A operação reúne filtros, status, edição de catálogo e indicadores fictícios em telas rápidas e consistentes.", deliverable: "Dashboard administrativo completo e interativo", code: "const dashboard = createWorkspace({\n  overview: [\"revenue\", \"orders\", \"customers\"],\n  modules: [\"products\", \"analytics\", \"seo\"],\n  dataSource: fictionalStoreData,\n});\n\nexport default dashboard;", errors: ["ENV001: integrações de produção desativadas nesta demo"] },
+      { title: "Versão final", description: "Loja e dashboard reunidos em uma demonstração segura e fiel, com catálogo, personalização, carrinho, checkout, rastreamento, gestão, analytics e SEO. Todos os dados são fictícios e nenhuma informação é transmitida.", deliverable: "Aplicação completa assinada por Humberto Zizi", code: "const release = await build({\n  storefront: true,\n  dashboard: true,\n  fictionalDataOnly: true,\n  errors: 0,\n});\n\nrelease.open(\"http://localhost:3000\");", errors: [] },
+    ],
   },
   {
-    hash: "d4e5f6a",
+    hash: "m3n0rd5",
     year: "2026",
-    branch: "main",
-    title: "ARAM Overlay",
+    branch: "comparison/demo",
+    title: "Menor Desconto",
     description:
-      "Uma taskbar compacta para acompanhar a partida sem ocupar o campo de visão.",
+      "Plataforma de comparação que organiza produtos, ofertas, cupons e histórico de preços em uma jornada clara.",
     detail:
-      "Overlay desktop arrastável, conectado aos dados reais da partida e pensado para mostrar somente recomendações úteis no momento certo.",
-    stack: ["Electron", "Vite", "TypeScript", "Riot data"],
+      "A experiência compara lojas por produto, destaca a melhor condição e inclui favoritos, alertas, guias e uma área administrativa, usando somente dados fictícios nesta demonstração.",
+    stack: ["React", "TypeScript", "Vite", "Node.js"],
     status: "done",
-    visual: "overlay",
+    visual: "discount",
+    stages: [
+      { title: "Pesquisa e regras do produto", description: "Definição do menordesconto como comparador independente: busca livre, produto canônico, ofertas separadas por loja, condição identificada e confirmação antes do redirecionamento. A arquitetura evita prometer menor preço absoluto sem fonte e horário de verificação.", deliverable: "Jornada, critérios de confiança e mapa de rotas", code: "const productRules = {\n  canonicalIdentity: [\"ean\", \"brand\", \"model\", \"variant\"],\n  handoffRequiresConfirmation: true,\n  discloseSourceAndUpdatedAt: true,\n};", errors: ["RULE005: oferta sem origem declarada", "UX012: saída para loja sem confirmação", "TYPE021: variante misturada ao produto base", "SEO004: páginas públicas sem metadados", "ROUTE404: rota de pesquisa incompleta"] },
+      { title: "Catálogo normalizado", description: "Criação dos modelos de Product, Offer, Store e PricePoint. Produtos equivalentes são agrupados por identidade canônica, enquanto preço, frete, desconto, vendedor, condição e atualização permanecem em cada oferta.", deliverable: "Catálogo com produtos, lojas, ofertas e histórico", code: "type Product = { id: string; ean: string; model: string; offers: Offer[] };\ntype Offer = { store: StoreKey; price: number; shipping: number; condition: Condition; updatedAt: string };\n\nconst best = offers.sort((a, b) => a.total - b.total)[0];", errors: ["DATA013: histórico sem ordenação temporal", "OFFER007: frete ausente no total", "EAN001: produto duplicado por variante", "STATE003: condição ainda não filtrada"] },
+      { title: "Busca e provedores", description: "Implementação da pesquisa por nome, marca, modelo e EAN, com filtros de condição, marca, preço e frete. A camada de provedores diferencia catálogo verificado, API oficial e simples encaminhamento externo, sem misturar respostas não confirmadas.", deliverable: "Busca multiloja com cobertura e filtros explícitos", code: "const providers: SearchProvider[] = [\n  mercadoLivreOfficialApi,\n  verifiedCatalogProvider,\n  amazonExternalSearch,\n];\n\nconst results = await searchStores(query, { filters });", errors: ["API429: limite temporário do provedor", "FILTER008: preço máximo reinicia na busca", "COVERAGE002: origem não exibida no resultado"] },
+      { title: "Comparação e decisão", description: "Construção da página do produto com menor oferta destacada, quantidade de lojas comparadas, condição, reputação, formas de pagamento, histórico de preços e alertas. O usuário confirma o destino antes de sair do comparador.", deliverable: "Página de produto, histórico e alertas funcionais", code: "<OfferComparison\n  product={canonicalProduct}\n  highlightLowest\n  showHistory\n  onAlert={createPriceAlert}\n  onHandoff={confirmDestination}\n/>", errors: ["CHART006: intervalo do histórico inconsistente", "ALERT002: valor desejado sem validação"] },
+      { title: "Conteúdo, SEO e operação", description: "Criação dos guias originais, páginas de transparência e painel protegido. O dashboard reúne catálogo, ofertas, cupons, integrações, analytics, SEO e tarefas operacionais, sem expor credenciais no cliente.", deliverable: "Área editorial e dashboard administrativo", code: "const adminModules = [\n  \"overview\", \"catalog\", \"offers\", \"coupons\",\n  \"integrations\", \"analytics\", \"seo\",\n];\n\nprotect(\"/admin\", sessionAuth);", errors: ["ENV001: integrações externas desativadas na demonstração"] },
+      { title: "Versão final", description: "Aplicação fiel ao projeto desenvolvido, com home, catálogo, busca, produto, comparação de lojas, favoritos, alertas, cupons, guias e painel. A versão de portfólio usa o visual e a navegação reais, mas bloqueia integrações externas e opera somente com conteúdo ilustrativo.", deliverable: "menordesconto completo e seguro, por Humberto Zizi", code: "const release = await build({\n  routes: [\"catalog\", \"product\", \"alerts\", \"guides\", \"admin\"],\n  originalInterface: true,\n  externalIntegrations: false,\n  errors: 0,\n});", errors: [] },
+    ],
   },
   {
     hash: "b7i8j9k",
@@ -218,6 +281,12 @@ const projects: Record<Language, Project[]> = {
     stack: ["Chrome", "JavaScript", "DOM", "Web Audio"],
     status: "done",
     visual: "extension",
+    stages: [
+      { title: "Observação", description: "Identificação dos eventos importantes e dos estados que precisam continuar funcionando em segundo plano.", deliverable: "Mapa de eventos e alertas" },
+      { title: "Protótipo", description: "Notificação mínima com leitura rápida, volume e separação clara entre tipos de alerta.", deliverable: "Popup e alerta sonoro testáveis" },
+      { title: "Confiabilidade", description: "Tratamento do DOM, aba oculta e fluxo de áudio para evitar alertas duplicados ou perdidos.", deliverable: "Monitoramento estável da página" },
+      { title: "Versão final", description: "Extensão discreta que monitora eventos e avisa apenas quando é necessário.", deliverable: "Simulação funcional do monitor" },
+    ],
   },
   {
     hash: "c0d3x12",
@@ -231,116 +300,417 @@ const projects: Record<Language, Project[]> = {
     stack: ["Web design", "HTML", "CSS", "JavaScript"],
     status: "experiment",
     visual: "site",
+    stages: [
+      { title: "Estratégia", description: "Organização da oferta, do público e do caminho entre a primeira visita e o contato.", deliverable: "Arquitetura comercial da página" },
+      { title: "Direção visual", description: "Escolha de hierarquia, tipografia, ritmo e contraste para uma apresentação marcante.", deliverable: "Sistema visual e wireframe" },
+      { title: "Desenvolvimento", description: "Construção responsiva, leve e direta, sem infraestrutura desnecessária.", deliverable: "Landing page pronta para publicação" },
+      { title: "Versão final", description: "Experiência comercial que conduz o cliente da ideia ao briefing inicial.", deliverable: "Briefing interativo funcional" },
+    ],
   },
   ],
   en: [
     {
-      hash: "a1f40c2", year: "2026", branch: "main", title: "NoCode Studio",
-      description: "A visual editor for turning ideas into pages, components, and interactive experiences.",
-      detail: "The project connects a block library, organized properties, and an AI bridge to the result shown in the editor.",
-      stack: ["Next.js", "React", "TypeScript", "AI bridge"], status: "building", visual: "editor",
+      hash: "f1m4g24", year: "2026", branch: "store/demo", title: "Foto Ímãs Store",
+      description: "A complete personalized magnet store with guided shopping, photo uploads, and an admin dashboard.",
+      detail: "The experience combines catalog, customization, cart, checkout, tracking, analytics, and management in a lightweight responsive interface.",
+      stack: ["React", "TypeScript", "Vite", "Node.js"], status: "done", visual: "store",
+      stages: [
+        { title: "Product architecture", description: "Complete definition of the storefront, catalog, photo customization, cart, checkout, shipping, tracking, and management journey. Public and admin areas share the same product, customer, and order domain.", deliverable: "Functional map of the store, services, and dashboard", code: "type StoreDomain = {\n  catalog: Product[];\n  checkout: CheckoutFlow;\n  dashboard: AdminWorkspace;\n};\n\nconst routes = [\"/\", \"/product/:id\", \"/dashboard\"];", errors: ["TS2307: catalog module is not connected", "ROUTE404: dashboard route is missing", "DATA001: order model is incomplete", "API000: external adapters are pending"] },
+        { title: "Store and purchase experience", description: "Responsive home, products, details, cart, and photo setup with cropping, zoom, and rotation. The flow also covers address, delivery options, visual payment, and order tracking.", deliverable: "Fully navigable storefront and guided purchase", code: "function Storefront() {\n  const cart = useCart();\n  return (\n    <Catalog onAdd={cart.add}>\n      <PhotoConfigurator crop zoom rotate />\n      <Checkout shipping payment />\n    </Catalog>\n  );\n}", errors: ["STATE014: crop is not persisted in cart", "SHIP002: shipping uses a local fallback"] },
+        { title: "Dashboard and operations", description: "Admin workspace with overview, revenue, orders, customers, products, analytics, SEO, and settings. Filters, statuses, catalog editing, and fictional indicators remain fast and consistent.", deliverable: "Complete interactive admin dashboard", code: "const dashboard = createWorkspace({\n  overview: [\"revenue\", \"orders\", \"customers\"],\n  modules: [\"products\", \"analytics\", \"seo\"],\n  dataSource: fictionalStoreData,\n});\n\nexport default dashboard;", errors: ["ENV001: production integrations are disabled in this demo"] },
+        { title: "Final version", description: "Store and dashboard combined in a safe, faithful demo with catalog, customization, cart, checkout, tracking, management, analytics, and SEO. All data is fictional and nothing is transmitted.", deliverable: "Complete application signed by Humberto Zizi", code: "const release = await build({\n  storefront: true,\n  dashboard: true,\n  fictionalDataOnly: true,\n  errors: 0,\n});\n\nrelease.open(\"http://localhost:3000\");", errors: [] },
+      ],
     },
     {
-      hash: "d4e5f6a", year: "2026", branch: "main", title: "ARAM Overlay",
-      description: "A compact taskbar for following the match without taking over the field of view.",
-      detail: "A draggable desktop overlay connected to real match data, designed to show only useful recommendations at the right moment.",
-      stack: ["Electron", "Vite", "TypeScript", "Riot data"], status: "done", visual: "overlay",
+      hash: "m3n0rd5", year: "2026", branch: "comparison/demo", title: "Menor Desconto",
+      description: "A price-comparison platform that organizes products, offers, coupons, and price history into a clear journey.",
+      detail: "The experience compares stores by product, highlights the best condition, and includes favorites, alerts, guides, and an admin area, using fictional data only in this demo.",
+      stack: ["React", "TypeScript", "Vite", "Node.js"], status: "done", visual: "discount",
+      stages: [
+        { title: "Product research and rules", description: "Defining menordesconto as an independent comparison service: free-text search, canonical products, store-specific offers, identified conditions, and confirmation before store handoff. The architecture never promises an absolute lowest price without source and verification time.", deliverable: "Journey, trust criteria, and route map", code: "const productRules = {\n  canonicalIdentity: [\"ean\", \"brand\", \"model\", \"variant\"],\n  handoffRequiresConfirmation: true,\n  discloseSourceAndUpdatedAt: true,\n};", errors: ["RULE005: offer source is missing", "UX012: store handoff has no confirmation", "TYPE021: variant mixed with base product", "SEO004: public pages have no metadata", "ROUTE404: search route is incomplete"] },
+        { title: "Normalized catalog", description: "Creating Product, Offer, Store, and PricePoint models. Equivalent products are grouped by canonical identity while price, shipping, discount, seller, condition, and update time stay attached to each offer.", deliverable: "Catalog with products, stores, offers, and history", code: "type Product = { id: string; ean: string; model: string; offers: Offer[] };\ntype Offer = { store: StoreKey; price: number; shipping: number; condition: Condition; updatedAt: string };\n\nconst best = offers.sort((a, b) => a.total - b.total)[0];", errors: ["DATA013: history is not ordered", "OFFER007: shipping missing from total", "EAN001: duplicated product variant", "STATE003: condition filter missing"] },
+        { title: "Search and providers", description: "Search by name, brand, model, and EAN with condition, brand, price, and shipping filters. The provider layer distinguishes verified catalog data, official APIs, and external-search handoffs without blending unverified responses.", deliverable: "Multi-store search with explicit coverage and filters", code: "const providers: SearchProvider[] = [\n  mercadoLivreOfficialApi,\n  verifiedCatalogProvider,\n  amazonExternalSearch,\n];\n\nconst results = await searchStores(query, { filters });", errors: ["API429: provider rate limit", "FILTER008: maximum price resets", "COVERAGE002: result source is hidden"] },
+        { title: "Comparison and decision", description: "Product page with the lowest offer highlighted, stores compared, condition, seller reputation, payment methods, price history, and alerts. The user confirms the destination before leaving the comparison service.", deliverable: "Product page, history, and alerts", code: "<OfferComparison\n  product={canonicalProduct}\n  highlightLowest\n  showHistory\n  onAlert={createPriceAlert}\n  onHandoff={confirmDestination}\n/>", errors: ["CHART006: history interval is inconsistent", "ALERT002: target price is not validated"] },
+        { title: "Content, SEO, and operations", description: "Original buying guides, transparency pages, and a protected admin workspace. The dashboard covers catalog, offers, coupons, integrations, analytics, SEO, and operational tasks without exposing credentials to the client.", deliverable: "Editorial area and administrative dashboard", code: "const adminModules = [\n  \"overview\", \"catalog\", \"offers\", \"coupons\",\n  \"integrations\", \"analytics\", \"seo\",\n];\n\nprotect(\"/admin\", sessionAuth);", errors: ["ENV001: external integrations are disabled in the demo"] },
+        { title: "Final version", description: "A faithful version of the developed project with home, catalog, search, product comparison, favorites, alerts, coupons, guides, and dashboard. The portfolio build preserves the real interface and navigation while blocking external integrations.", deliverable: "Complete safe menordesconto experience by Humberto Zizi", code: "const release = await build({\n  routes: [\"catalog\", \"product\", \"alerts\", \"guides\", \"admin\"],\n  originalInterface: true,\n  externalIntegrations: false,\n  errors: 0,\n});", errors: [] },
+      ],
     },
     {
       hash: "b7i8j9k", year: "2026", branch: "alerts", title: "CSGORoll Alerts",
       description: "A minimal extension that watches the page and alerts you when an important action happens.",
       detail: "The experience was reduced to the essentials: rain and wallet alerts, volume control, and a reliable audio flow.",
       stack: ["Chrome", "JavaScript", "DOM", "Web Audio"], status: "done", visual: "extension",
+      stages: [
+        { title: "Observation", description: "Identifying important events and states that must keep working in the background.", deliverable: "Event and alert map" },
+        { title: "Prototype", description: "A minimal notification with quick reading, volume, and a clear split between alert types.", deliverable: "Testable popup and sound alert" },
+        { title: "Reliability", description: "Handling the DOM, hidden tabs, and audio flow to prevent duplicate or missed alerts.", deliverable: "Stable page monitoring" },
+        { title: "Final version", description: "A discreet extension that monitors events and alerts only when needed.", deliverable: "Functional monitor simulation" },
+      ],
     },
     {
       hash: "c0d3x12", year: "now", branch: "idea/site", title: "WorkSite",
       description: "A commercial experience for presenting and selling websites in a simple, visual way.",
       detail: "Planned as a fast static website without unnecessary infrastructure, guiding the client from first contact to the briefing.",
       stack: ["Web design", "HTML", "CSS", "JavaScript"], status: "experiment", visual: "site",
+      stages: [
+        { title: "Strategy", description: "Organizing the offer, audience, and path from the first visit to contact.", deliverable: "Commercial page architecture" },
+        { title: "Visual direction", description: "Choosing hierarchy, typography, rhythm, and contrast for a memorable presentation.", deliverable: "Visual system and wireframe" },
+        { title: "Development", description: "A responsive, lightweight, and direct build without unnecessary infrastructure.", deliverable: "Landing page ready to publish" },
+        { title: "Final version", description: "A commercial experience that takes the client from an idea to the initial brief.", deliverable: "Functional interactive brief" },
+      ],
     },
   ],
 };
 
 function ProjectVisual({ type, title, copy }: { type: Project["visual"]; title: string; copy: Translation }) {
-  if (type === "editor") {
+  if (type === "store") {
     return (
-      <div className="project-visual editor-visual" role="img" aria-label={`${copy.projectPreview} ${title}`}>
-        <div className="mini-window-bar"><span /><span /><span /><b>canvas.page</b></div>
-        <div className="editor-layout">
-          <div className="editor-tools"><i /><i /><i /><i /></div>
-          <div className="editor-canvas">
-            <span className="canvas-label">HERO / 01</span>
-            <strong>{copy.visual.editorTitle}</strong>
-            <div className="canvas-button">{copy.visual.start}</div>
-          </div>
-          <div className="editor-properties"><small>LAYOUT</small><i /><i /><small>STYLE</small><i /></div>
-        </div>
+      <div className="project-visual store-visual" role="img" aria-label={`${copy.projectPreview} ${title}`}>
+        <div className="store-preview-screenshot" style={{ backgroundImage: `url(${publicBasePath}/demos/foto-imas-store/site-presentation-clean.png)` }} />
       </div>
     );
   }
-
-  if (type === "overlay") {
-    return (
-      <div className="project-visual overlay-visual" role="img" aria-label={`${copy.projectPreview} ${title}`}>
-        <div className="game-field"><i /><i /><i /><i /><i /></div>
-        <div className="overlay-bar">
-          <div className="drag-grip">••••</div>
-          <span className="champion-token">A</span>
-          <div className="build-items"><i /><i /><i /><i /><i /><i /></div>
-          <strong>ARAM</strong>
-          <span className="live-dot">LIVE</span>
-        </div>
-      </div>
-    );
+  if (type === "discount") {
+    return <div className="project-visual discount-visual" role="img" aria-label={`${copy.projectPreview} ${title}`}><div className="discount-preview-nav"><b><i>◇</i>menor<span>desconto</span></b><em>Buscar produto, marca ou modelo...</em><small>♡ Favoritos　♢ Alertas</small></div><div className="discount-preview-categories"><b>▦ Todas as categorias</b><span>Celulares　 Informática　 Eletrodomésticos　 TV e Vídeo　 Games</span></div><div className="discount-preview-hero"><div><small>✦ COMPARAÇÃO INTELIGENTE</small><strong><span>Preço menor.</span><br />Desconto de verdade.</strong><p>Compare preços reais, escolha com clareza e pague menos.</p></div><div className="discount-preview-hero-image" style={{ backgroundImage: `url(${publicBasePath}/demos/menor-desconto/assets/hero-comparison.webp)` }} /></div></div>;
   }
-
   if (type === "extension") {
+    return <div className="project-visual extension-visual" role="img" aria-label={`${copy.projectPreview} ${title}`}><div className="browser-line"><span /><span /><span /><b>csgoroll.com</b></div><div className="rain-orbit"><i /><i /><i /></div><div className="alert-toast"><span className="alert-icon">R</span><div><small>{copy.visual.newEvent}</small><strong>{copy.visual.rain}</strong></div><b>{copy.visual.now}</b></div><div className="volume-track"><span>VOL</span><i><b /></i><strong>72%</strong></div></div>;
+  }
+  return <div className="project-visual site-visual" role="img" aria-label={`${copy.projectPreview} ${title}`}><div className="site-nav"><b>work/site</b><span>{copy.visual.siteNav}</span></div><div className="site-hero-copy"><small>{copy.visual.siteLabel}</small><strong>{copy.visual.siteTitle}</strong><span>{copy.visual.siteFlow}</span></div><div className="site-shape"><i /><b /></div></div>;
+}
+
+function StageProjectPreview({ project, stageIndex, language }: { project: Project; stageIndex: number; language: Language }) {
+  if (project.visual === "discount") {
+    if (stageIndex === 0) return <div className="stage-preview-architecture stage-preview-comparison"><span>PRODUCT RULES</span><div><b>BUSCA LIVRE</b><i>→</i><strong>COMPARAÇÃO</strong><i>→</i><b>CONFIRMAÇÃO</b></div><div><b>FONTE</b><i>+</i><b>VERIFICAÇÃO</b><i>+</i><b>TRANSPARÊNCIA</b></div></div>;
+    if (stageIndex === 1) return <div className="stage-preview-architecture stage-preview-comparison"><span>NORMALIZED CATALOG</span><div><b>EAN / GTIN</b><i>→</i><strong>PRODUTO</strong><i>←</i><b>MARCA + MODELO</b></div><div><b>LOJA A</b><i>↔</i><b>OFERTAS</b><i>↔</i><b>LOJA B</b></div></div>;
+    if (stageIndex === 2) return <div className="stage-preview-discount"><header><b>menor<span>desconto</span></b><i>Buscar produto, marca ou modelo...</i></header><main><div><small>BUSCA MULTILOJA</small><strong>Filtros com origem explícita.</strong></div><article><em>API</em><i>⌕</i><span>Smartphone 256 GB</span><b>12 resultados</b><small>catálogo + provedor oficial</small></article></main></div>;
+    if (stageIndex === 3) return <div className="stage-preview-discount"><header><b>COMPARATIVO</b><i>Produto canônico · atualizado agora</i></header><main><div><small>4 LOJAS COMPARADAS</small><strong>R$ 3.449,90</strong><span>Histórico de preços　♡ Criar alerta</span></div><article><em>MENOR</em><i>▣</i><span>Loja verificada</span><b>Frete grátis</b><small>confirmar antes de sair →</small></article></main></div>;
+    return <div className="stage-preview-dashboard discount-dashboard"><aside><b>md</b><span>Visão geral</span><span>Catálogo</span><span>Ofertas</span><span>Guias</span></aside><main><small>{language === "pt" ? "PAINEL DE OPERAÇÃO" : "OPERATIONS DASHBOARD"}</small><div className="stage-stat-grid"><b>24 produtos</b><b>86 ofertas</b><b>12 alertas</b></div><div className="stage-chart"><i /><i /><i /><i /><i /><i /></div></main></div>;
+  }
+  if (project.visual !== "store") return <div className="stage-preview-generic"><span>PREVIEW</span><strong>{project.title}</strong><i /></div>;
+  if (stageIndex === 0) return <div className="stage-preview-architecture"><span>STORE DOMAIN</span><div><b>VITRINE</b><i>→</i><b>CHECKOUT</b><i>→</i><b>PEDIDOS</b></div><div><b>CATÁLOGO</b><i>↔</i><strong>API</strong><i>↔</i><b>DASHBOARD</b></div></div>;
+  if (stageIndex === 1) return <div className="stage-preview-storefront"><header><b>Foto Ímãs Store</b><span>Produtos &nbsp; Como funciona &nbsp; ◌</span></header><main><div><small>PERSONALIZE MOMENTOS</small><strong>Suas fotos viram memórias.</strong><i>Ver produtos →</i></div><div className="stage-product-grid"><span /><span /><span /></div></main></div>;
+  return <div className="stage-preview-dashboard"><aside><b>FIS</b><span>Visão geral</span><span>Pedidos</span><span>Produtos</span><span>Analytics</span></aside><main><small>{language === "pt" ? "VISÃO GERAL" : "OVERVIEW"}</small><div className="stage-stat-grid"><b>R$ 503</b><b>48 pedidos</b><b>39 clientes</b></div><div className="stage-chart"><i /><i /><i /><i /><i /><i /></div></main></div>;
+}
+
+function ProjectFinalDemo({ project, language }: { project: Project; language: Language }) {
+  const [demoLevel, setDemoLevel] = useState(0);
+  const [demoActive, setDemoActive] = useState(false);
+  const [demoViewport, setDemoViewport] = useState<"desktop" | "mobile">("desktop");
+  const copy = language === "pt"
+    ? {
+        addBlock: "+ adicionar bloco", publish: "publicar", published: "publicado ✓", liveCanvas: "CANVAS AO VIVO",
+        sync: "sincronizar partida", synced: "partida sincronizada", recommendation: "RECOMENDAÇÃO ATUAL",
+        monitor: "ativar monitor", monitoring: "monitorando", simulate: "simular evento", detected: "evento detectado",
+        brief: "montar briefing", next: "próxima escolha", ready: "briefing pronto", choices: ["objetivo", "estilo", "conteúdo", "contato"],
+      }
+    : {
+        addBlock: "+ add block", publish: "publish", published: "published ✓", liveCanvas: "LIVE CANVAS",
+        sync: "sync match", synced: "match synced", recommendation: "CURRENT RECOMMENDATION",
+        monitor: "enable monitor", monitoring: "monitoring", simulate: "simulate event", detected: "event detected",
+        brief: "build brief", next: "next choice", ready: "brief ready", choices: ["goal", "style", "content", "contact"],
+      };
+
+  if (project.visual === "store") {
     return (
-      <div className="project-visual extension-visual" role="img" aria-label={`${copy.projectPreview} ${title}`}>
-        <div className="browser-line"><span /><span /><span /><b>csgoroll.com</b></div>
-        <div className="rain-orbit"><i /><i /><i /></div>
-        <div className="alert-toast">
-          <span className="alert-icon">R</span>
-          <div><small>{copy.visual.newEvent}</small><strong>{copy.visual.rain}</strong></div>
-          <b>{copy.visual.now}</b>
+      <div className="store-final-showcase">
+        <div className="store-final-copy">
+          <span>01 / {language === "pt" ? "PROJETO FINAL" : "FINAL PROJECT"}</span>
+          <h2>Foto Ímãs Store</h2>
+          <p>{language === "pt" ? "Uma experiência completa para transformar fotos em presentes personalizados — da descoberta do produto ao acompanhamento do pedido." : "A complete experience for turning photos into personalized gifts, from product discovery to order tracking."}</p>
+          <div className="store-final-actions">
+            <a href={`${publicBasePath}/demos/foto-imas-store/index.html`} target="_blank" rel="noreferrer">{language === "pt" ? "Ver demo do projeto" : "View project demo"} <b>↗</b></a>
+            <a href="https://fotoimasstore.com.br/" target="_blank" rel="noreferrer">{language === "pt" ? "Ver projeto no cliente" : "View client project"} <b>↗</b></a>
+          </div>
         </div>
-        <div className="volume-track"><span>VOL</span><i><b /></i><strong>72%</strong></div>
+        <div className="store-final-image" role="img" aria-label={language === "pt" ? "Projeto final Foto Ímãs Store" : "Final Foto Ímãs Store project"} style={{ backgroundImage: `url(${publicBasePath}/demos/foto-imas-store/site-presentation-clean.png)` }}>
+          <div className="store-final-card"><i role="img" aria-label="Foto Ímãs Store" style={{ backgroundImage: `url(${publicBasePath}/demos/foto-imas-store/logo-imastore.png)` }} /><span>{language === "pt" ? "Ímãs personalizados com suas fotos" : "Personalized magnets with your photos"}</span></div>
+        </div>
       </div>
     );
   }
+
+  if (project.visual === "discount") {
+    return (
+      <div className="studio-demo demo-storefront demo-discount">
+        <div className="studio-browser-toolbar">
+          <span aria-hidden="true">‹</span><span aria-hidden="true">›</span><span aria-hidden="true">↻</span>
+          <code>http://localhost:3000/</code>
+          <div className="studio-viewport-switch" role="group" aria-label={language === "pt" ? "Tamanho da tela" : "Screen size"}>
+            <button type="button" className={demoViewport === "desktop" ? "is-active" : ""} aria-pressed={demoViewport === "desktop"} onClick={() => setDemoViewport("desktop")}>▣ <span>Desktop</span></button>
+            <button type="button" className={demoViewport === "mobile" ? "is-active" : ""} aria-pressed={demoViewport === "mobile"} onClick={() => setDemoViewport("mobile")}>▯ <span>Mobile</span></button>
+          </div>
+        </div>
+        <div className={`demo-browser-viewport is-${demoViewport}`}>
+          <iframe src={`${publicBasePath}/demos/menor-desconto/index.html`} title={language === "pt" ? "Demonstração interativa do Menor Desconto" : "Interactive Menor Desconto demo"} sandbox="allow-scripts allow-same-origin" />
+        </div>
+      </div>
+    );
+  }
+
+  if (project.visual === "extension") {
+    return (
+      <div className="studio-demo demo-extension">
+        <div className="demo-browser-address"><span>● ● ●</span><b>csgoroll.com</b></div>
+        <div className="demo-extension-panel">
+          <div className="monitor-row"><span className={demoActive ? "is-on" : ""} /><strong>{demoActive ? copy.monitoring : copy.monitor}</strong><button type="button" onClick={() => setDemoActive((active) => !active)}>{demoActive ? "ON" : "OFF"}</button></div>
+          <button type="button" className="simulate-alert" disabled={!demoActive} onClick={() => setDemoLevel((level) => level + 1)}>{copy.simulate}</button>
+          {demoLevel > 0 && <div className="demo-alert-pop" key={demoLevel}><b>R</b><span><small>{copy.detected}</small><strong>Rain disponível</strong></span><em>AGORA</em></div>}
+        </div>
+      </div>
+    );
+  }
+
+  const nextBriefStep = () => {
+    setDemoActive(true);
+    setDemoLevel((level) => Math.min(level + 1, copy.choices.length));
+  };
 
   return (
-    <div className="project-visual site-visual" role="img" aria-label={`${copy.projectPreview} ${title}`}>
-      <div className="site-nav"><b>work/site</b><span>{copy.visual.siteNav}</span></div>
-      <div className="site-hero-copy">
-        <small>{copy.visual.siteLabel}</small>
-        <strong>{copy.visual.siteTitle}</strong>
-        <span>{copy.visual.siteFlow}</span>
+    <div className="studio-demo demo-site">
+      <div className="demo-site-nav"><b>work/site</b><span>briefing.visual</span></div>
+      <div className="demo-brief-card">
+        <small>01 — BRIEFING</small>
+        <h4>{demoLevel >= copy.choices.length ? copy.ready : demoLevel === 0 ? copy.brief : copy.choices[demoLevel]}</h4>
+        <div className="brief-progress">{copy.choices.map((choice, index) => <i key={choice} className={index < demoLevel ? "is-done" : index === demoLevel ? "is-current" : ""} />)}</div>
+        <button type="button" onClick={nextBriefStep} disabled={demoLevel >= copy.choices.length}>{demoLevel === 0 ? copy.brief : demoLevel >= copy.choices.length ? "✓" : copy.next}</button>
       </div>
-      <div className="site-shape"><i /><b /></div>
+      <div className={`demo-site-shape ${demoActive ? "is-active" : ""}`} />
     </div>
   );
+}
+
+function StoreWireframeTrace({ removedTiles }: { removedTiles: ReadonlySet<number> }) {
+  const traceStyle = (step: number) => ({ "--trace-delay": `${20 + step * 3.75}s` } as CSSProperties);
+  const wireframeMask = `url(${publicBasePath}/demos/foto-imas-store/site-wireframe-transparent-v3.png)`;
+  const traces = [
+    { kind: "rect", x: 10, y: 6, width: 48, height: 21, rx: 3 },
+    { kind: "rect", x: 156, y: 14, width: 27, height: 7, rx: 3.5 },
+    { kind: "rect", x: 189, y: 14, width: 27, height: 7, rx: 3.5 },
+    { kind: "rect", x: 223, y: 14, width: 31, height: 7, rx: 3.5 },
+    { kind: "rect", x: 354, y: 9, width: 56, height: 15, rx: 7.5 },
+    { kind: "rect", x: 416, y: 9, width: 14, height: 15, rx: 3 },
+    { kind: "path", d: "M0 32H448" },
+    { kind: "rect", x: 29, y: 68, width: 72, height: 12, rx: 6 },
+    { kind: "rect", x: 29, y: 96, width: 170, height: 16, rx: 4 },
+    { kind: "rect", x: 29, y: 122, width: 162, height: 16, rx: 4 },
+    { kind: "rect", x: 29, y: 149, width: 129, height: 16, rx: 4 },
+    { kind: "rect", x: 29, y: 178, width: 153, height: 8, rx: 3 },
+    { kind: "rect", x: 29, y: 190, width: 125, height: 8, rx: 3 },
+    { kind: "rect", x: 29, y: 214, width: 61, height: 19, rx: 4 },
+    { kind: "rect", x: 98, y: 214, width: 66, height: 19, rx: 4 },
+    { kind: "rect", x: 232, y: 64, width: 195, height: 177, rx: 15 }
+  ] as const;
+  const layers = ["is-trace-persist", "is-trace-head"];
+
+  return <svg className="store-wireframe-trace" viewBox="0 0 448 280" aria-hidden="true" style={{ maskImage: wireframeMask, WebkitMaskImage: wireframeMask, maskSize: "100% 100%", WebkitMaskSize: "100% 100%", maskRepeat: "no-repeat", WebkitMaskRepeat: "no-repeat" }}>
+    <defs><clipPath id="store-wireframe-visible-pieces">{Array.from({ length: 40 }, (_, index) => removedTiles.has(index + 1) ? null : <rect key={index} x={(index % 8) * 56} y={Math.floor(index / 8) * 56} width="56" height="56" />)}</clipPath></defs>
+    <g clipPath="url(#store-wireframe-visible-pieces)">{traces.map((trace, step) => <g key={step} style={traceStyle(step)}>
+        {layers.map((layer) => trace.kind === "rect"
+          ? <rect key={layer} className={layer} pathLength="1" x={trace.x} y={trace.y} width={trace.width} height={trace.height} rx={trace.rx} />
+          : <path key={layer} className={layer} pathLength="1" d={trace.d} />)}
+      </g>)}</g>
+  </svg>;
+}
+
+function StoreReadmePreview({ language, visibleSections }: { language: Language; visibleSections: string[] }) {
+  const pt = language === "pt";
+  const reveal = (id: string, extra = "") => `store-reveal ${visibleSections.includes(id) ? "is-visible" : ""} ${extra}`.trim();
+  const journey = pt
+    ? [["01", "Escolher", "Produto, formato e quantidade"], ["02", "Personalizar", "Upload, recorte e prévia"], ["03", "Comprar", "Carrinho, entrega e pagamento"], ["04", "Acompanhar", "Produção até a entrega"]]
+    : [["01", "Choose", "Product, format, and quantity"], ["02", "Customize", "Upload, crop, and preview"], ["03", "Purchase", "Cart, shipping, and payment"], ["04", "Track", "Production through delivery"]];
+  const removedPuzzleTiles = new Set([9, 10, 17, 18, 19, 25, 26, 33]);
+
+  return <article className="store-readme-preview">
+    <header id="store-readme-intro" className={reveal("store-readme-intro", "store-readme-hero")}>
+      <div><span className="store-readme-kicker">README.md · PRODUCT CASE</span><h1>Foto Ímãs <em>Store</em></h1><p>{pt ? "Uma experiência completa para transformar fotografias em ímãs personalizados — da primeira escolha ao acompanhamento do pedido." : "A complete experience for turning photos into custom magnets — from the first choice to order tracking."}</p><div className="store-readme-actions"><a href={`${publicBasePath}/demos/foto-imas-store/index.html`} target="_blank" rel="noreferrer">{pt ? "ver demonstração" : "view demo"} ↗</a><a href="https://fotoimasstore.com.br/" target="_blank" rel="noreferrer">{pt ? "projeto publicado" : "live project"} ↗</a></div></div>
+      <div className="store-readme-mosaic" aria-hidden="true">{Array.from({ length: 40 }, (_, index) => {
+        const column = index % 8;
+        const row = Math.floor(index / 8);
+        let wrongColumn = ((index * 3) % 5) - 2;
+        const wrongRow = ((index * 2) % 3) - 1;
+        if (wrongColumn === 0 && wrongRow === 0) wrongColumn = index % 2 === 0 ? 1 : -1;
+        const wireframeMask = `url(${publicBasePath}/demos/foto-imas-store/site-wireframe-transparent-v3.png)`;
+        const wireframePosition = `${column * (100 / 7)}% ${row * 25}%`;
+        const tileStyle = {
+          maskImage: wireframeMask,
+          WebkitMaskImage: wireframeMask,
+          maskPosition: wireframePosition,
+          WebkitMaskPosition: wireframePosition,
+          "--mosaic-opacity": removedPuzzleTiles.has(index + 1) ? 0 : 1,
+          "--puzzle-delay": `${(((index * 17) % 40) * 0.3).toFixed(2)}s`,
+          "--puzzle-entry-x": `${(((index * 29) % 9) - 4) * 42}px`,
+          "--puzzle-entry-y": `${(((index * 23) % 7) - 3) * 34}px`,
+          "--puzzle-wrong-x": `calc(var(--mosaic-cell) * ${wrongColumn})`,
+          "--puzzle-wrong-y": `calc(var(--mosaic-cell) * ${wrongRow})`,
+          "--puzzle-near-x": `${wrongColumn * 7}px`,
+          "--puzzle-near-y": `${wrongRow * 7}px`,
+          "--puzzle-rotate": `${(((index * 13) % 9) - 4) * 7}deg`
+        } as CSSProperties;
+        return <i key={index} data-row={row} data-column={column} style={tileStyle} />;
+      })}<StoreWireframeTrace removedTiles={removedPuzzleTiles} /></div>
+    </header>
+
+    <section className={reveal("store-readme-intro", "store-readme-browser-showcase store-reveal-delayed")}>
+      <div className="store-readme-browser-bar"><span><i /><i /><i /></span><b>fotoimasstore.com.br</b><em>↗</em></div>
+      <div className="store-readme-site-image" role="img" aria-label={pt ? "Página inicial completa da Foto Ímãs Store" : "Complete Foto Ímãs Store homepage"} style={{ backgroundImage: `url(${publicBasePath}/demos/foto-imas-store/site-presentation-clean.png)` }} />
+      <footer><span>{pt ? "PROJETO FINAL" : "FINAL PROJECT"}</span><p>{pt ? "Loja responsiva criada para apresentar, personalizar e vender ímãs com fotografias." : "A responsive store built to present, customize, and sell photo magnets."}</p></footer>
+    </section>
+
+    <section className={reveal("store-readme-intro", "store-readme-summary store-reveal-delayed-more")}>
+      <div><small>{pt ? "PRODUTO" : "PRODUCT"}</small><strong>E-commerce personalizado</strong></div><div><small>STACK</small><strong>React · TypeScript · Vite</strong></div><div><small>{pt ? "ENTREGA" : "DELIVERY"}</small><strong>Loja + Dashboard</strong></div><div><small>STATUS</small><strong className="is-ready">● {pt ? "concluído" : "complete"}</strong></div>
+    </section>
+
+    <section id="store-readme-overview" className={reveal("store-readme-overview", "store-readme-section")}><header><span>01</span><div><small>{pt ? "VISÃO DO PRODUTO" : "PRODUCT VISION"}</small><h2>{pt ? "Personalização simples para uma compra complexa." : "Simple customization for a complex purchase."}</h2></div></header><p>{pt ? "O projeto conecta catálogo, envio de fotos, edição visual, carrinho, checkout, rastreamento e gestão. Cada etapa reduz dúvidas e preserva a personalização escolhida pelo cliente." : "The project connects catalog, photo upload, visual editing, cart, checkout, tracking, and management. Every step reduces uncertainty and preserves the customer's customization."}</p></section>
+
+    <section id="store-readme-journey" className={reveal("store-readme-journey", "store-readme-section")}><header><span>02</span><div><small>{pt ? "JORNADA" : "JOURNEY"}</small><h2>{pt ? "Do arquivo digital ao produto físico." : "From digital file to physical product."}</h2></div></header><div className="store-readme-journey">{journey.map(([number, title, text]) => <div key={number}><b>{number}</b><strong>{title}</strong><p>{text}</p></div>)}</div></section>
+
+    <section id="store-readme-features" className={reveal("store-readme-features", "store-readme-section")}><header><span>03</span><div><small>{pt ? "RECURSOS" : "FEATURES"}</small><h2>{pt ? "Uma experiência completa, não apenas uma vitrine." : "A complete experience, not just a storefront."}</h2></div></header><div className="store-readme-feature-grid"><article><b>◇</b><strong>{pt ? "Personalização visual" : "Visual customization"}</strong><p>{pt ? "Envio, recorte, zoom e rotação com prévia antes da compra." : "Upload, crop, zoom, and rotation with a preview before purchase."}</p></article><article><b>▱</b><strong>{pt ? "Compra guiada" : "Guided purchase"}</strong><p>{pt ? "Produto, quantidade, fotos, carrinho e checkout em uma sequência clara." : "Product, quantity, photos, cart, and checkout in a clear sequence."}</p></article><article><b>⌁</b><strong>{pt ? "Acompanhamento" : "Order tracking"}</strong><p>{pt ? "Consulta do pedido por código e e-mail, da produção à entrega." : "Order lookup by code and email, from production through delivery."}</p></article><article><b>▦</b><strong>Dashboard</strong><p>{pt ? "Pedidos, produtos, clientes, métricas, SEO e configurações em um painel." : "Orders, products, customers, metrics, SEO, and settings in one panel."}</p></article></div></section>
+
+    <section id="store-readme-dashboard" className={reveal("store-readme-dashboard", "store-readme-operation")}>
+      <div><span>04 / DASHBOARD</span><h2>{pt ? "A experiência continua depois da venda." : "The experience continues after the sale."}</h2><p>{pt ? "O painel administrativo transforma cada personalização em informação útil para produção, atendimento e gestão. A equipe acompanha pedidos, clientes, catálogo e desempenho sem perder o contexto da compra." : "The admin dashboard turns each customization into useful information for production, support, and management. The team follows orders, customers, catalog, and performance without losing purchase context."}</p><div className="store-readme-metrics"><span><b>48</b><small>{pt ? "pedidos" : "orders"}</small></span><span><b>3,8%</b><small>{pt ? "conversão" : "conversion"}</small></span><span><b>R$ 84</b><small>{pt ? "ticket médio" : "average order"}</small></span></div></div>
+      <div className="store-readme-dashboard-card"><header><b>fotoímãs</b><span>{pt ? "operação" : "operations"}</span></header><div className="store-readme-dashboard-nav"><i className="is-active">{pt ? "Visão geral" : "Overview"}</i><i>{pt ? "Pedidos" : "Orders"}</i><i>{pt ? "Clientes" : "Customers"}</i></div><main><small>{pt ? "PEDIDOS DE HOJE" : "TODAY'S ORDERS"}</small><strong>12 {pt ? "em produção" : "in production"}</strong><span><b>FI-1048</b>{pt ? "Fotos aprovadas" : "Photos approved"}<em>{pt ? "Produção" : "Production"}</em></span><span><b>FI-1047</b>{pt ? "Aguardando revisão" : "Awaiting review"}<em>{pt ? "Revisar" : "Review"}</em></span></main></div>
+    </section>
+
+    <section id="store-readme-challenges" className={reveal("store-readme-challenges", "store-readme-section")}><header><span>05</span><div><small>{pt ? "DESAFIOS" : "CHALLENGES"}</small><h2>{pt ? "Complexidade resolvida na interface." : "Complexity resolved in the interface."}</h2></div></header><div className="store-readme-challenges"><article><span>01</span><div><strong>{pt ? "Fotos imprevisíveis" : "Unpredictable photos"}</strong><p>{pt ? "Área segura e prévia fiel para diferentes proporções de imagem." : "Safe areas and faithful previews for different image ratios."}</p></div></article><article><span>02</span><div><strong>{pt ? "Muitas decisões" : "Many decisions"}</strong><p>{pt ? "Uma jornada curta preserva formato, quantidade, recorte e entrega." : "A short journey preserves format, quantity, crop, and shipping."}</p></div></article><article><span>03</span><div><strong>{pt ? "Loja e produção" : "Store and production"}</strong><p>{pt ? "O pedido leva a personalização aprovada até a operação." : "The order carries approved customization into operations."}</p></div></article></div></section>
+
+    <section id="store-readme-stack" className={reveal("store-readme-stack", "store-readme-stack")}><div><span>06 / STACK</span><h2>{pt ? "Tecnologia escolhida para velocidade e manutenção." : "Technology chosen for speed and maintainability."}</h2></div><div><b>React</b><b>TypeScript</b><b>Vite</b><b>Tailwind CSS</b><b>Lucide</b><b>GitHub Pages</b></div></section>
+
+    <footer id="store-readme-result" className={reveal("store-readme-result", "store-readme-footer")}><span>◇</span><div><small>{pt ? "RESULTADO" : "RESULT"}</small><strong>{pt ? "Uma loja completa, responsiva e preparada para publicação, conectando a experiência do cliente à operação." : "A complete responsive storefront ready for publishing, connecting customer experience to operations."}</strong></div><a href={`${publicBasePath}/demos/foto-imas-store/index.html`} target="_blank" rel="noreferrer">{pt ? "explorar demonstração" : "explore demo"} ↗</a></footer>
+  </article>;
+}
+
+const storeReadmeSectionIds = ["store-readme-intro", "store-readme-overview", "store-readme-journey", "store-readme-features", "store-readme-dashboard", "store-readme-challenges", "store-readme-stack", "store-readme-result"];
+
+function StoreCodeWorkspace({ language }: { language: Language }) {
+  const [activeReadmeSection, setActiveReadmeSection] = useState("store-readme-intro");
+  const [visibleReadmeSections, setVisibleReadmeSections] = useState(["store-readme-intro"]);
+  const storeWorkspaceRef = useRef<HTMLDivElement>(null);
+  const readmeSteps = language === "pt"
+    ? [["store-readme-intro", "Apresentação", "presentation"], ["store-readme-overview", "Visão", "vision"], ["store-readme-journey", "Jornada", "journey"], ["store-readme-features", "Recursos", "features"], ["store-readme-dashboard", "Dashboard", "dashboard"], ["store-readme-challenges", "Desafios", "challenges"], ["store-readme-stack", "Tecnologia", "technology"], ["store-readme-result", "Resultado", "result"]]
+    : [["store-readme-intro", "Presentation", "presentation"], ["store-readme-overview", "Vision", "vision"], ["store-readme-journey", "Journey", "journey"], ["store-readme-features", "Features", "features"], ["store-readme-dashboard", "Dashboard", "dashboard"], ["store-readme-challenges", "Challenges", "challenges"], ["store-readme-stack", "Technology", "technology"], ["store-readme-result", "Result", "result"]];
+  const activeReadmeIndex = Math.max(0, readmeSteps.findIndex(([id]) => id === activeReadmeSection));
+  const timelineStyle = { "--store-timeline-progress": `${(activeReadmeIndex / (readmeSteps.length - 1)) * 100}%` } as CSSProperties;
+
+  useEffect(() => {
+    const workspace = storeWorkspaceRef.current;
+    const scrollRoot = workspace?.querySelector<HTMLElement>(".store-code-document");
+    const sections = storeReadmeSectionIds.map((id) => workspace?.querySelector<HTMLElement>(`#${id}`)).filter((section): section is HTMLElement => Boolean(section));
+    if (!scrollRoot || sections.length === 0) return;
+    const observer = new IntersectionObserver((entries) => {
+      const entering = entries.filter((entry) => entry.isIntersecting);
+      if (entering.length > 0) {
+        setVisibleReadmeSections((current) => {
+          const next = new Set(current);
+          entering.forEach((entry) => next.add(entry.target.id));
+          return next.size === current.length ? current : Array.from(next);
+        });
+      }
+    }, { root: scrollRoot, rootMargin: "0px 0px -62% 0px", threshold: [0.01, 0.1, 0.25] });
+    sections.forEach((section) => observer.observe(section));
+    const syncActiveSection = () => {
+      if (scrollRoot.scrollTop + scrollRoot.clientHeight >= scrollRoot.scrollHeight - 8) {
+        setActiveReadmeSection(storeReadmeSectionIds[storeReadmeSectionIds.length - 1]);
+        return;
+      }
+      const activationLine = scrollRoot.getBoundingClientRect().top + 90;
+      const current = sections.reduce((selected, section) => section.getBoundingClientRect().top <= activationLine ? section : selected, sections[0]);
+      setActiveReadmeSection(current.id);
+    };
+    scrollRoot.addEventListener("scroll", syncActiveSection, { passive: true });
+    const initialFrame = window.requestAnimationFrame(syncActiveSection);
+    return () => { observer.disconnect(); scrollRoot.removeEventListener("scroll", syncActiveSection); window.cancelAnimationFrame(initialFrame); };
+  }, [language]);
+
+  const goToReadmeSection = (id: string) => {
+    const section = storeWorkspaceRef.current?.querySelector<HTMLElement>(`#${id}`);
+    if (!section) return;
+    setActiveReadmeSection(id);
+    setVisibleReadmeSections((current) => current.includes(id) ? current : [...current, id]);
+    section.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
+  };
+
+  return <div className="store-code-workbench has-readme-nav" ref={storeWorkspaceRef}>
+    <aside className="store-code-activity store-readme-nav" style={timelineStyle} aria-label={language === "pt" ? "Etapas do projeto" : "Project stages"}>
+      <i className="store-readme-nav-rail" aria-hidden="true" />
+      <div className="store-readme-nav-items">{readmeSteps.map(([id, label], index) => <button className={activeReadmeSection === id ? "is-active" : index < activeReadmeIndex ? "is-passed" : ""} type="button" key={id} aria-label={`${String(index + 1).padStart(2, "0")} — ${label}`} onClick={() => goToReadmeSection(id)}><span className="store-nav-copy"><b>{String(index + 1).padStart(2, "0")}</b><em>{label}</em></span></button>)}</div>
+    </aside>
+    <main className="store-code-editor">
+      <div className="store-code-document is-readme" aria-label="README.md — Markdown"><StoreReadmePreview language={language} visibleSections={visibleReadmeSections} /></div>
+      <footer className="store-code-status"><span>⑂ main</span><span>README.md</span><span>Markdown</span><span>UTF-8</span></footer>
+    </main>
+  </div>;
 }
 
 export default function Home() {
   const [activeSection, setActiveSection] = useState("inicio");
   const [readmeState, setReadmeState] = useState<"open" | "closing" | "closed">("open");
   const [menuOpen, setMenuOpen] = useState(false);
+  const [projectsMenuOpen, setProjectsMenuOpen] = useState(false);
+  const [selectedProjectHash, setSelectedProjectHash] = useState<string | null>(null);
   const [typedAsciiCommand, setTypedAsciiCommand] = useState("");
   const [revealedAsciiLines, setRevealedAsciiLines] = useState(0);
   const [language, setLanguage] = useState<Language>("pt");
+  const [studioState, setStudioState] = useState<"closed" | "booting" | "opening" | "open" | "closing">("closed");
+  const [studioProjectIndex, setStudioProjectIndex] = useState(0);
+  const [studioMode, setStudioMode] = useState<StudioMode>("final");
+  const [studioBootText, setStudioBootText] = useState("");
+  const [studioBootStep, setStudioBootStep] = useState(0);
+  const [studioBootCountdown, setStudioBootCountdown] = useState(1.5);
   const timelineRef = useRef<HTMLElement>(null);
   const binaryPortraitRef = useRef<HTMLCanvasElement>(null);
   const readmeCloseTimerRef = useRef<number | null>(null);
+  const studioCloseTimerRef = useRef<number | null>(null);
+  const studioDialogRef = useRef<HTMLElement>(null);
+  const studioTriggerRef = useRef<HTMLElement | null>(null);
   const readmeCloseInProgressRef = useRef(false);
   const t = translations[language];
   const localizedProjects = projects[language];
   const asciiRenderComplete = revealedAsciiLines >= portraitLineCount;
   const asciiRevealPercent = (revealedAsciiLines / portraitLineCount) * 100;
+  const studioProject = localizedProjects[studioProjectIndex] ?? localizedProjects[0];
+  const isStoreCase = studioProject.visual === "store";
+  const studioIsInfo = studioMode === "info";
+  const studioDifficultyErrors = studioProject.stages.flatMap((stage) => stage.errors ?? []);
+  const studioErrors = studioMode === "difficulties" && !isStoreCase ? studioDifficultyErrors : [];
 
   const chooseLanguage = (nextLanguage: Language) => {
     setLanguage(nextLanguage);
     window.localStorage.setItem("portfolio-language", nextLanguage);
+  };
+
+  const openProjectStudio = (projectIndex = 0, trigger?: HTMLElement | null) => {
+    if (studioCloseTimerRef.current !== null) {
+      window.clearTimeout(studioCloseTimerRef.current);
+      studioCloseTimerRef.current = null;
+    }
+    studioTriggerRef.current = trigger ?? document.activeElement as HTMLElement | null;
+    setStudioProjectIndex(projectIndex);
+    setStudioMode("final");
+    setStudioBootText("");
+    setStudioBootStep(0);
+    setStudioBootCountdown(3);
+    setStudioState("booting");
+  };
+
+  const closeProjectStudio = () => {
+    if (studioState === "closed" || studioState === "closing") return;
+    if (studioState === "booting") {
+      setStudioState("closed");
+      studioTriggerRef.current?.focus();
+      return;
+    }
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    setStudioState("closing");
+    studioCloseTimerRef.current = window.setTimeout(() => {
+      setStudioState("closed");
+      studioTriggerRef.current?.focus();
+      studioCloseTimerRef.current = null;
+    }, reducedMotion ? 0 : 280);
+  };
+
+  const selectStudioSection = (mode: StudioMode) => {
+    setStudioMode(mode);
   };
 
   const openReadme = () => {
@@ -381,17 +751,103 @@ export default function Home() {
     if (readmeCloseTimerRef.current !== null) {
       window.clearTimeout(readmeCloseTimerRef.current);
     }
+    if (studioCloseTimerRef.current !== null) {
+      window.clearTimeout(studioCloseTimerRef.current);
+    }
   }, []);
 
   useEffect(() => {
-    const savedLanguage = window.localStorage.getItem("portfolio-language");
-    if (savedLanguage === "pt" || savedLanguage === "en") {
-      setLanguage(savedLanguage);
-      return;
+    if (studioState !== "booting" || !studioProject) return;
+    const command = `project.open --name "${studioProject.title}"`;
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    if (reducedMotion) {
+      const reducedMotionFrame = window.requestAnimationFrame(() => {
+        setStudioBootText(command);
+        setStudioBootStep(2);
+        setStudioState("opening");
+      });
+      return () => window.cancelAnimationFrame(reducedMotionFrame);
     }
 
-    const regionalLanguage = navigator.languages?.[0] ?? navigator.language;
-    setLanguage(regionalLanguage.toLowerCase().startsWith("pt") ? "pt" : "en");
+    let characterIndex = 0;
+    let loadingTimer = 0;
+    let readyTimer = 0;
+    let openingTimer = 0;
+    let countdownTimer = 0;
+    const typingTimer = window.setInterval(() => {
+      characterIndex += 1;
+      setStudioBootText(command.slice(0, characterIndex));
+      if (characterIndex < command.length) return;
+
+      window.clearInterval(typingTimer);
+      loadingTimer = window.setTimeout(() => setStudioBootStep(1), 180);
+      readyTimer = window.setTimeout(() => {
+        setStudioBootStep(2);
+        setStudioBootCountdown(1.5);
+        countdownTimer = window.setInterval(() => {
+          setStudioBootCountdown((countdown) => Math.max(0, countdown - 0.5));
+        }, 500);
+      }, 720);
+      openingTimer = window.setTimeout(() => setStudioState("opening"), 2220);
+    }, 27);
+
+    return () => {
+      window.clearInterval(typingTimer);
+      window.clearTimeout(loadingTimer);
+      window.clearTimeout(readyTimer);
+      window.clearTimeout(openingTimer);
+      window.clearInterval(countdownTimer);
+    };
+  }, [studioProject, studioState]);
+
+  useEffect(() => {
+    if (studioState !== "opening") return;
+    const openingFrame = window.requestAnimationFrame(() => {
+      setStudioState("open");
+      window.requestAnimationFrame(() => studioDialogRef.current?.focus());
+    });
+    return () => window.cancelAnimationFrame(openingFrame);
+  }, [studioState]);
+
+  useEffect(() => {
+    if (studioState === "closed") return;
+    const previousOverflow = document.body.style.overflow;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Escape" || studioState === "closing") return;
+      if (studioState === "booting") {
+        setStudioState("closed");
+        studioTriggerRef.current?.focus();
+        return;
+      }
+      const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      setStudioState("closing");
+      studioCloseTimerRef.current = window.setTimeout(() => {
+        setStudioState("closed");
+        studioTriggerRef.current?.focus();
+        studioCloseTimerRef.current = null;
+      }, reducedMotion ? 0 : 280);
+    };
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [studioState]);
+
+  useEffect(() => {
+    const languageTimer = window.setTimeout(() => {
+      const savedLanguage = window.localStorage.getItem("portfolio-language");
+      if (savedLanguage === "pt" || savedLanguage === "en") {
+        setLanguage(savedLanguage);
+        return;
+      }
+
+      const regionalLanguage = navigator.languages?.[0] ?? navigator.language;
+      setLanguage(regionalLanguage.toLowerCase().startsWith("pt") ? "pt" : "en");
+    }, 0);
+    return () => window.clearTimeout(languageTimer);
   }, []);
 
   useEffect(() => {
@@ -403,9 +859,11 @@ export default function Home() {
   useEffect(() => {
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (reducedMotion) {
-      setTypedAsciiCommand(asciiCommand);
-      setRevealedAsciiLines(portraitLineCount);
-      return;
+      const reducedMotionFrame = window.requestAnimationFrame(() => {
+        setTypedAsciiCommand(asciiCommand);
+        setRevealedAsciiLines(portraitLineCount);
+      });
+      return () => window.cancelAnimationFrame(reducedMotionFrame);
     }
 
     const characterDuration = 32;
@@ -919,6 +1377,29 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
+    const syncSelectedProject = () => {
+      const projectHash = window.location.hash.match(/^#project-(.+)$/)?.[1] ?? null;
+      if (projectHash) {
+        setSelectedProjectHash(projectHash);
+        setProjectsMenuOpen(true);
+        setActiveSection("projetos");
+      }
+    };
+    const navigationEntry = window.performance.getEntriesByType("navigation")[0] as PerformanceNavigationTiming | undefined;
+    if (navigationEntry?.type === "reload") {
+      const previousScrollBehavior = document.documentElement.style.scrollBehavior;
+      document.documentElement.style.scrollBehavior = "auto";
+      window.history.replaceState(null, "", `${window.location.pathname}${window.location.search}#inicio`);
+      window.scrollTo(0, 0);
+      window.requestAnimationFrame(() => { document.documentElement.style.scrollBehavior = previousScrollBehavior; });
+    } else {
+      syncSelectedProject();
+    }
+    window.addEventListener("hashchange", syncSelectedProject);
+    return () => window.removeEventListener("hashchange", syncSelectedProject);
+  }, []);
+
+  useEffect(() => {
     document.documentElement.classList.add("motion-ready");
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
     const sections = Array.from(document.querySelectorAll<HTMLElement>("[data-section]"));
@@ -1015,9 +1496,9 @@ export default function Home() {
         <a className="brand" href="#inicio" aria-label={t.backHome} onClick={openReadme}>
           <span>humbertozizi</span><b>.dev</b>
         </a>
-        <a className="command-link" href="#projetos">
+        <button className="command-link" type="button" onClick={(event) => openProjectStudio(0, event.currentTarget)}>
           <span aria-hidden="true">›</span> {t.explore} <i aria-hidden="true" />
-        </a>
+        </button>
         <div className="topbar-tools">
           <div className="language-switch" role="group" aria-label="Language / Idioma">
             <button type="button" className={language === "pt" ? "active" : ""} aria-pressed={language === "pt"} onClick={() => chooseLanguage("pt")}>PT</button>
@@ -1040,13 +1521,49 @@ export default function Home() {
         <aside className={`repo-sidebar ${menuOpen ? "is-open" : ""}`} aria-label={t.explorer}>
           <div className="repo-heading"><span aria-hidden="true">⌄</span> /home/humbertozizi</div>
           <nav aria-label={t.sections}>
-            {navItems.map((item) => (
+            {navItems.map((item) => item.id === "projetos" ? (
+              <div className={`repo-tree ${projectsMenuOpen ? "is-open" : ""}`} key={item.id}>
+                <button
+                  type="button"
+                  className={`repo-tree-trigger ${activeSection === item.id || selectedProjectHash ? "active" : ""}`}
+                  aria-expanded={projectsMenuOpen}
+                  onClick={() => {
+                    setProjectsMenuOpen((open) => !open);
+                    setSelectedProjectHash(null);
+                    setActiveSection("projetos");
+                    window.location.hash = "projetos";
+                  }}
+                >
+                  <span className="repo-tree-chevron" aria-hidden="true">›</span>
+                  <span className={`file-icon file-${item.id}`} aria-hidden="true">{item.icon}</span>
+                  {item.file}
+                </button>
+                <div className="repo-projects" aria-hidden={!projectsMenuOpen}>
+                  {localizedProjects.map((project, index) => (
+                    <a
+                      key={project.hash}
+                      href={`#project-${project.hash}`}
+                      className={selectedProjectHash === project.hash ? "is-selected" : ""}
+                      aria-current={selectedProjectHash === project.hash ? "location" : undefined}
+                      onClick={() => {
+                        setSelectedProjectHash(project.hash);
+                        setActiveSection("projetos");
+                        setMenuOpen(false);
+                      }}
+                    >
+                      <span aria-hidden="true">{String(index + 1).padStart(2, "0")}</span>{index === 0 ? "imasStore" : project.title}
+                    </a>
+                  ))}
+                </div>
+              </div>
+            ) : (
               <a
                 key={item.id}
                 href={`#${item.id}`}
-                className={activeSection === item.id ? "active" : ""}
-                aria-current={activeSection === item.id ? "page" : undefined}
+                className={activeSection === item.id && !selectedProjectHash ? "active" : ""}
+                aria-current={activeSection === item.id && !selectedProjectHash ? "page" : undefined}
                 onClick={() => {
+                  setSelectedProjectHash(null);
                   setMenuOpen(false);
                   if (item.id === "inicio") openReadme();
                 }}
@@ -1079,7 +1596,7 @@ export default function Home() {
                     {t.leadStart} <strong>{t.leadStrong}</strong> {t.leadEnd}
                   </p>
                   <div className="hero-actions hero-enter enter-four">
-                    <a className="primary-action" href="#projetos">{t.viewProjects} <span>↓</span></a>
+                    <button className="primary-action" type="button" onClick={(event) => openProjectStudio(0, event.currentTarget)}>{t.viewProjects} <span>↗</span></button>
                     <a className="text-action" href="#sobre">{t.aboutMe} <span>↗</span></a>
                   </div>
                   <div className="code-self hero-enter enter-five" aria-label={t.codeAria}>
@@ -1101,6 +1618,8 @@ export default function Home() {
                   </div>
                   <div className="ascii-art-frame">
                     <div className="ascii-reveal" style={{ clipPath: `inset(0 0 ${100 - asciiRevealPercent}% 0)` }}>
+                      {/* Direct loading keeps this canvas overlay pixel-aligned with its source image. */}
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img className="ascii-color-portrait" src={portraitSource} alt="" width="1254" height="1254" />
                       <canvas ref={binaryPortraitRef} className="ascii-binary-canvas" />
                     </div>
@@ -1130,7 +1649,7 @@ export default function Home() {
               <div className="timeline-rail" aria-hidden="true"><i /></div>
               <ol className="timeline-list">
                 {localizedProjects.map((project, index) => (
-                  <li key={project.hash} className={`timeline-entry ${index % 2 ? "entry-right" : "entry-left"}`}>
+                  <li id={`project-${project.hash}`} key={project.hash} className={`timeline-entry ${index % 2 ? "entry-right" : "entry-left"}`}>
                     <div className="commit-node reveal" aria-hidden="true">
                       <span>{String(index + 1).padStart(2, "0")}</span>
                     </div>
@@ -1145,13 +1664,9 @@ export default function Home() {
                         <div className="branch-label"><span>git:</span> {project.branch}</div>
                         <h3>{project.title}</h3>
                         <p>{project.description}</p>
-                        <ul className="tech-list" aria-label={`${t.technologies} ${project.title}`}>
-                          {project.stack.map((technology) => <li key={technology}>{technology}</li>)}
-                        </ul>
-                        <details>
-                          <summary>{t.inspectProject} <span aria-hidden="true">+</span></summary>
-                          <p>{project.detail}</p>
-                        </details>
+                        <ul className="tech-list" aria-label={`${t.technologies} ${project.title}`}>{project.stack.map((technology) => <li key={technology}>{technology}</li>)}</ul>
+                        <details><summary>{t.inspectProject} <span aria-hidden="true">+</span></summary><p>{project.detail}</p></details>
+                        <button className="open-studio-button" type="button" onClick={(event) => openProjectStudio(index, event.currentTarget)}><span aria-hidden="true">◇</span> {t.openStudio} <b aria-hidden="true">↗</b></button>
                       </div>
                     </article>
                   </li>
@@ -1198,6 +1713,102 @@ export default function Home() {
           </section>
         </main>
       </div>
+
+      {studioState !== "closed" && studioProject ? (
+        <div
+          className={`project-studio-layer studio-${studioState}`}
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) closeProjectStudio();
+          }}
+        >
+          {studioState === "booting" ? (
+            <div className="studio-boot-console" role="status" aria-live="polite">
+              <header><span><i /><i /><i /></span><b>project-loader.console</b><em>UTF-8</em></header>
+              <div className="studio-boot-output">
+                <p><span>humberto@portfolio</span>:<b>~/projects</b>$ {studioBootText}<i className="studio-boot-cursor" /></p>
+                <div className={`studio-boot-lines boot-step-${studioBootStep}`}>
+                  <p><i>[1/3]</i> {t.studioBootOpening}: <strong>{studioProject.title}</strong></p>
+                  <p><i>[2/3]</i> {t.studioBootLoading}<span className="studio-loading-dots">...</span></p>
+                  <p><i>[3/3]</i> <strong>{t.studioBootReady}</strong> <b>✓</b> <em>{t.studioBootTransfer} {studioBootCountdown}s</em></p>
+                </div>
+                <div className={`studio-boot-progress boot-step-${studioBootStep}`}><i /></div>
+              </div>
+            </div>
+          ) : (
+            <section
+              ref={studioDialogRef}
+              className={`project-studio-window ${isStoreCase ? "is-store-theme" : ""}`}
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="project-studio-title"
+              tabIndex={-1}
+            >
+            <header className="studio-titlebar">
+              <div className="studio-window-actions" aria-hidden="true"><i /><i /><i /></div>
+              <div id="project-studio-title"><span>◇</span> {t.studioTitle} — {studioProject.title}</div>
+              <button className="studio-window-close" type="button" aria-label={t.studioClose} onClick={closeProjectStudio}>×</button>
+            </header>
+
+            <div className="studio-workspace">
+              <div className={`studio-main ${studioMode === "final" && !isStoreCase ? "is-final-browser" : ""} ${isStoreCase ? "is-store-case" : ""}`}>
+                <div className="studio-content">
+                  {!isStoreCase && <nav className="studio-floating-steps" aria-label={t.studioJourney}>
+                    <button type="button" title={language === "pt" ? "Projeto final" : "Final project"} aria-label={language === "pt" ? "Ir para projeto final" : "Go to final project"} className={studioMode === "final" ? "is-active" : ""} onClick={() => selectStudioSection("final")}><span>01</span><b>{language === "pt" ? "Projeto" : "Project"}</b></button>
+                    <>
+                      <button type="button" title={language === "pt" ? "Conceito" : "Concept"} className={studioMode === "concept" ? "is-active" : ""} onClick={() => selectStudioSection("concept")}><span>02</span><b>{language === "pt" ? "Conceito" : "Concept"}</b></button>
+                      <button type="button" title={language === "pt" ? "Dificuldades" : "Challenges"} className={studioMode === "difficulties" ? "is-active" : ""} onClick={() => selectStudioSection("difficulties")}><span>03</span><b>{language === "pt" ? "Desafios" : "Challenges"}</b></button>
+                      <button type="button" title={language === "pt" ? "Ficha do projeto" : "Project details"} className={studioIsInfo ? "is-active" : ""} onClick={() => selectStudioSection("info")}><span>04</span><b>{language === "pt" ? "Ficha" : "Details"}</b></button>
+                    </>
+                  </nav>}
+
+                  <article className="studio-editor-pane">
+                    {isStoreCase ? (
+                      <StoreCodeWorkspace language={language} />
+                    ) : studioIsInfo ? (
+                      <div className="studio-project-info">
+                        <header><span>{isStoreCase ? "06" : "04"} / PROJECT-INFO.MD</span><h2>{studioProject.title}</h2><p>{language === "pt" ? "Ficha técnica, tecnologias e acesso ao projeto em funcionamento." : "Technical details, technologies, and access to the working project."}</p></header>
+                        <div className="project-info-grid">
+                          <div><small>{language === "pt" ? "LINGUAGEM PRINCIPAL" : "PRIMARY LANGUAGE"}</small><strong>{projectFacts[studioProject.visual].primaryLanguage}</strong></div>
+                          <div><small>{language === "pt" ? "CATEGORIA" : "CATEGORY"}</small><strong>{projectFacts[studioProject.visual].category}</strong></div>
+                          <div><small>RUNTIME</small><strong>{projectFacts[studioProject.visual].runtime}</strong></div>
+                          <div><small>STATUS</small><strong>{t.status[studioProject.status]}</strong></div>
+                          <div><small>STACK</small><strong>{studioProject.stack.join(" · ")}</strong></div>
+                          <div><small>BRANCH</small><strong>{studioProject.branch}</strong></div>
+                          <div><small>{language === "pt" ? "AUTOR" : "AUTHOR"}</small><strong>Humberto Zizi</strong></div>
+                          <div><small>{language === "pt" ? "ANO" : "YEAR"}</small><strong>{studioProject.year}</strong></div>
+                        </div>
+                        <div className="project-info-link">
+                          <span>{language === "pt" ? "LINK DO PROJETO ORIGINAL" : "ORIGINAL PROJECT LINK"}</span>
+                          {projectFacts[studioProject.visual].liveUrl ? <a href={projectFacts[studioProject.visual].liveUrl} target="_blank" rel="noreferrer">{language === "pt" ? "abrir projeto funcionando" : "open working project"} <b>↗</b></a> : <em>{language === "pt" ? "espaço reservado para a URL oficial" : "reserved for the official URL"}</em>}
+                        </div>
+                      </div>
+                    ) : studioMode === "final" ? (
+                      <div className="studio-final-view">
+                        <ProjectFinalDemo key={`${studioProject.hash}-${language}`} project={studioProject} language={language} />
+                      </div>
+                    ) : studioMode === "concept" ? (
+                      <div className="studio-concept-page">
+                        <header><span>02 / CONCEPT.MD</span><h2>{language === "pt" ? "O conceito por trás do projeto." : "The concept behind the project."}</h2><p>{studioProject.detail}</p></header>
+                        <div className="studio-concept-grid"><article><small>{language === "pt" ? "PROBLEMA" : "PROBLEM"}</small><strong>{studioProject.description}</strong></article><article><small>{language === "pt" ? "DIREÇÃO" : "DIRECTION"}</small><strong>{studioProject.stages[0]?.deliverable}</strong></article><article><small>STACK</small><strong>{studioProject.stack.join(" · ")}</strong></article></div>
+                        <div className="studio-stage-split"><section className="studio-code-panel"><header><span>CONCEPT CODE</span><code>architecture.ts</code></header><pre>{studioProject.stages[0]?.code ?? `const concept = "${studioProject.title}";`}</pre></section><section className="studio-preview-panel"><header><span>FIRST PROTOTYPE</span><code>localhost:3000</code></header><StageProjectPreview project={studioProject} stageIndex={0} language={language} /></section></div>
+                        <div className="studio-concept-flow">{studioProject.stages.map((stage, index) => <span key={stage.title}><i>{String(index + 1).padStart(2, "0")}</i>{stage.title}</span>)}</div>
+                      </div>
+                    ) : (
+                      <div className="studio-difficulties-page">
+                        <header><span>03 / DIFFICULTIES.LOG</span><h2>{language === "pt" ? "Problemas reais. Soluções construídas." : "Real problems. Built solutions."}</h2><p>{language === "pt" ? "Os principais obstáculos encontrados durante o desenvolvimento e o que foi entregue para resolver cada um." : "The main obstacles found during development and what was delivered to solve each one."}</p></header>
+                        <div className="studio-difficulty-list">{studioProject.stages.filter((stage) => (stage.errors ?? []).length > 0).map((stage, index) => <article key={stage.title}><header><span>{String(index + 1).padStart(2, "0")}</span><div><small>{language === "pt" ? "ETAPA" : "STAGE"}</small><h3>{stage.title}</h3></div><b>{stage.errors?.length} issues</b></header><ul>{stage.errors?.map((error) => <li key={error}><i>×</i>{error}</li>)}</ul><footer><small>{language === "pt" ? "SOLUÇÃO / ENTREGA" : "SOLUTION / DELIVERY"}</small><strong>{stage.deliverable}</strong></footer></article>)}</div>
+                        <div className="studio-difficulties-complete"><span>✓</span><div><small>FINAL BUILD</small><strong>{language === "pt" ? "Todos os problemas resolvidos na versão final." : "All issues resolved in the final version."}</strong></div><b>0 errors</b></div>
+                      </div>
+                    )}
+                  </article>
+                </div>
+                {!isStoreCase && <footer className={`studio-statusbar ${studioErrors.length ? "has-errors" : ""}`}><span>⑂ {studioProject.branch}*</span><span>{studioErrors.length} errors</span><b>TypeScript React</b><em>UTF-8</em></footer>}
+              </div>
+            </div>
+            </section>
+          )}
+        </div>
+      ) : null}
 
       <footer className="statusbar">
         <span className="status-branch">⌘ main*</span>
