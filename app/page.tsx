@@ -643,6 +643,7 @@ function StoreCodeWorkspace({ language }: { language: Language }) {
 }
 
 export default function Home() {
+  const [pageLoaderState, setPageLoaderState] = useState<"loading" | "leaving" | "done">("loading");
   const [activeSection, setActiveSection] = useState("inicio");
   const [readmeState, setReadmeState] = useState<"open" | "closing" | "closed">("open");
   const [menuOpen, setMenuOpen] = useState(false);
@@ -673,6 +674,23 @@ export default function Home() {
   const studioIsInfo = studioMode === "info";
   const studioDifficultyErrors = studioProject.stages.flatMap((stage) => stage.errors ?? []);
   const studioErrors = studioMode === "difficulties" && !isStoreCase ? studioDifficultyErrors : [];
+
+  useEffect(() => {
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const leavingTimer = window.setTimeout(() => setPageLoaderState("leaving"), reducedMotion ? 1600 : 3000);
+    const doneTimer = window.setTimeout(() => {
+      setPageLoaderState("done");
+      document.body.style.overflow = previousOverflow;
+    }, reducedMotion ? 1900 : 3450);
+
+    return () => {
+      window.clearTimeout(leavingTimer);
+      window.clearTimeout(doneTimer);
+      document.body.style.overflow = previousOverflow;
+    };
+  }, []);
 
   const chooseLanguage = (nextLanguage: Language) => {
     setLanguage(nextLanguage);
@@ -857,6 +875,7 @@ export default function Home() {
   }, [language, t]);
 
   useEffect(() => {
+    if (pageLoaderState !== "done") return;
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (reducedMotion) {
       const reducedMotionFrame = window.requestAnimationFrame(() => {
@@ -894,7 +913,7 @@ export default function Home() {
 
     animationFrame = window.requestAnimationFrame(animateConsole);
     return () => window.cancelAnimationFrame(animationFrame);
-  }, []);
+  }, [pageLoaderState]);
 
   useEffect(() => {
     const canvas = binaryPortraitRef.current;
@@ -1400,6 +1419,7 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
+    if (pageLoaderState !== "done") return;
     document.documentElement.classList.add("motion-ready");
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
     const sections = Array.from(document.querySelectorAll<HTMLElement>("[data-section]"));
@@ -1486,10 +1506,19 @@ export default function Home() {
       hero?.removeEventListener("pointermove", onPointerMove);
       if (frame) window.cancelAnimationFrame(frame);
     };
-  }, []);
+  }, [pageLoaderState]);
 
   return (
-    <div className="portfolio-shell">
+    <div className={`portfolio-shell ${pageLoaderState === "done" ? "is-site-ready" : ""}`}>
+      {pageLoaderState !== "done" && <div className={`page-loader ${pageLoaderState === "leaving" ? "is-leaving" : ""}`} role="status" aria-live="polite" aria-label={language === "pt" ? "Carregando portfólio" : "Loading portfolio"}>
+        <div className="page-loader-grid" aria-hidden="true" />
+        <div className="page-loader-content">
+          <span className="page-loader-kicker">PORTFOLIO / 2026</span>
+          <strong><span>humbertozizi</span><b>.dev</b></strong>
+          <div className="page-loader-track" aria-hidden="true"><i /></div>
+          <p><span>●</span> {language === "pt" ? "carregando experiência_" : "loading experience_"}</p>
+        </div>
+      </div>}
       <a className="skip-link" href="#conteudo">{t.skip}</a>
 
       <header className="topbar">

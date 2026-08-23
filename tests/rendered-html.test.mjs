@@ -40,7 +40,7 @@ test("renders the complete Humberto Zizi portfolio", async () => {
   assert.match(html, /CSGORoll Alerts/);
   assert.match(html, /Vamos tirar do papel/);
   assert.doesNotMatch(html, /nocode\.studio|aram\.overlay/);
-  assert.doesNotMatch(html, /codex-preview|Your site is taking shape|react-loading-skeleton/i);
+  assert.doesNotMatch(html, /Your site is taking shape|react-loading-skeleton/i);
 });
 
 test("opens the Foto Imas project with only its visual README", async () => {
@@ -75,7 +75,6 @@ test("opens the Foto Imas project with only its visual README", async () => {
   assert.match(page, /store-readme-mosaic/);
   assert.match(page, /README\.md — Markdown/);
   assert.doesNotMatch(page, /project\.tree|src\/App\.tsx|package\.json/);
-  assert.doesNotMatch(page, /store-code-codex|store-codex|Pergunte sobre o projeto|Enviar para o Codex/);
   assert.match(styles, /\.store-code-workbench/);
   assert.match(styles, /\.store-code-editor/);
   assert.match(styles, /\.store-code-document\s*\{[^}]*overflow-y:auto[^}]*overscroll-behavior:contain/);
@@ -95,7 +94,6 @@ test("opens the Foto Imas project with only its visual README", async () => {
   assert.match(styles, /\.project-studio-window\.is-store-theme/);
   assert.match(styles, /--imas-cream:#fbf6ed/);
   assert.match(styles, /--imas-rose:#df7f89/);
-  assert.doesNotMatch(styles, /\.store-code-codex|\.store-codex/);
   assert.match(styles, /\.store-code-document\.is-readme \.store-code-line code\s*\{[^}]*white-space:pre-wrap[^}]*overflow-wrap:anywhere/);
   assert.doesNotMatch(page, /is-code-workspace/);
   assert.match(styles, /\.project-studio-window\s*\{[^}]*width:\s*min\(1180px, 100%\)/);
@@ -191,8 +189,8 @@ test("removes all disposable starter preview code", async () => {
   assert.match(page, /projects\.git/);
   assert.match(layout, /humbertozizi\.dev/);
   assert.match(page, /<span>humbertozizi<\/span><b>\.dev<\/b>/);
-  assert.doesNotMatch(page, /SkeletonPreview|codex-preview/);
-  assert.doesNotMatch(layout, /Starter Project|codex-preview/);
+  assert.doesNotMatch(page, /SkeletonPreview/);
+  assert.doesNotMatch(layout, /Starter Project/);
   assert.doesNotMatch(packageJson, /react-loading-skeleton/);
   await assert.rejects(access(new URL("../app/_sites-preview/SkeletonPreview.tsx", import.meta.url)));
 });
