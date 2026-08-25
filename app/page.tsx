@@ -1899,6 +1899,7 @@ export default function Home() {
                         <p>{project.description}</p>
                         <ul className="tech-list" aria-label={`${t.technologies} ${project.title}`}>{project.stack.map((technology) => <li key={technology}>{technology}</li>)}</ul>
                         <details><summary><span className="project-inspect-label"><Info aria-hidden="true" />{t.inspectProject}</span><ChevronDown aria-hidden="true" /></summary><p>{project.detail}</p></details>
+                        {index === 0 && <div className="project-quick-links"><a href={`${publicBasePath}/demos/foto-imas-store/index.html#/dashboard`} target="_blank" rel="noreferrer"><LayoutDashboard aria-hidden="true" /><span>{language === "pt" ? "abrir dashboard" : "open dashboard"}</span><ArrowUpRight aria-hidden="true" /></a><a href="https://github.com/HumbertoFae/foto-imas-store" target="_blank" rel="noreferrer"><FaGithub aria-hidden="true" /><span>GitHub</span><ArrowUpRight aria-hidden="true" /></a></div>}
                         <button className="open-studio-button" type="button" onClick={(event) => openProjectStudio(index, event.currentTarget)}><CodeXml aria-hidden="true" /><span>{t.openStudio}</span><ArrowUpRight aria-hidden="true" /></button>
                       </div>
                     </article>
