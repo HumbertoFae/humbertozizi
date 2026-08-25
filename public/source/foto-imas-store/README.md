@@ -4,6 +4,12 @@ E-commerce responsivo para criação e compra de ímãs personalizados. A experi
 
 > Esta é a versão pública de portfólio. Os dados são fictícios e pagamentos, fretes e serviços externos são simulados.
 
+## Demonstração
+
+- [Abrir a demonstração no portfólio](https://humbertozizi.dev/demos/foto-imas-store/)
+- [Abrir diretamente o dashboard](https://humbertofae.github.io/foto-imas-store/#/dashboard)
+- [Ver o estudo de caso completo](https://humbertozizi.dev/#project-f1m4g24)
+
 ## Visão do produto
 
 O projeto transforma uma compra com muitas decisões em uma jornada simples:
@@ -21,7 +27,7 @@ O projeto transforma uma compra com muitas decisões em uma jornada simples:
 - Página de produto com preço, oferta e detalhes.
 - Configurador de fotografias com prévia e recorte.
 - Carrinho lateral com atualização e exclusão de itens.
-- Checkout visual com endereço, frete e Mercado Pago.
+- Checkout visual com endereço, frete e Mercado Pago simulado.
 - Rastreamento de pedido por código e e-mail.
 - Dashboard com pedidos, clientes, produtos, analytics e SEO.
 - Navegação por hash pronta para hospedagem no GitHub Pages.
@@ -30,20 +36,21 @@ O projeto transforma uma compra com muitas decisões em uma jornada simples:
 
 ```text
 foto-imas-store/
+├── public/             # imagens e produtos da demonstração
+├── src/
+│   ├── main.tsx        # inicialização do React
+│   ├── App.tsx         # loja, checkout, rastreamento e dashboard
+│   ├── data.ts         # catálogo e registros fictícios
+│   └── styles.css      # identidade visual e responsividade
 ├── index.html          # documento inicial do Vite
 ├── package.json        # scripts e dependências
-├── vite.config.ts      # build estático e base relativa
 ├── tsconfig.json       # configuração TypeScript
-└── src/
-    ├── main.tsx        # inicialização do React
-    ├── App.tsx         # loja, checkout, rastreamento e dashboard
-    ├── data.ts         # catálogo e registros fictícios
-    └── styles.css      # identidade visual e responsividade
+└── vite.config.ts      # build estático com base relativa
 ```
 
 ## Tecnologias
 
-- React
+- React 19
 - TypeScript
 - Vite
 - Tailwind CSS
@@ -51,26 +58,30 @@ foto-imas-store/
 
 ## Executar localmente
 
+Requer Node.js 20 ou superior.
+
 ```bash
 npm install
 npm run dev
 ```
 
-## Gerar a versão final
+## Validar e gerar a versão final
 
 ```bash
+npm ci
 npm run build
 ```
 
-O resultado é criado em `dist/`. A configuração `base: "./"` e as rotas por hash permitem publicar a mesma saída em qualquer caminho do GitHub Pages.
+O comando executa a verificação do TypeScript e gera os arquivos estáticos em `dist/`. A configuração `base: "./"` e as rotas por hash permitem publicar a mesma saída em qualquer caminho do GitHub Pages.
 
 ## Segurança da demonstração
 
-- Nenhuma credencial ou token de produção está incluído.
+- Nenhuma credencial, token ou integração de produção está incluída.
 - Fotografias selecionadas permanecem somente no navegador.
-- Pedidos, clientes, métricas e valores são ilustrativos.
+- Pedidos, clientes, métricas, endereços e valores são ilustrativos.
 - Nenhum pagamento ou cálculo de frete real é executado.
+- Alterações do painel duram somente durante a navegação.
 
 ## Autoria
 
-Design e desenvolvimento: Humberto Zizi.
+Design e desenvolvimento: **Humberto Zizi**.
