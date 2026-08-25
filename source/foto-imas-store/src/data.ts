@@ -23,12 +23,12 @@ export const products: DemoProduct[] = [
 ];
 
 export const orders = [
-  { id: "FIS-1048", customer: "Mariana Costa", email: "mariana.demo@email.com", date: "19/08/2026", total: 109.7, payment: "Pago", status: "Em produção", items: 2 },
-  { id: "FIS-1047", customer: "Lucas Ribeiro", email: "lucas.demo@email.com", date: "19/08/2026", total: 74.8, payment: "Pago", status: "A enviar", items: 1 },
-  { id: "FIS-1046", customer: "Camila Santos", email: "camila.demo@email.com", date: "18/08/2026", total: 169.8, payment: "Pago", status: "Enviado", items: 2 },
-  { id: "FIS-1045", customer: "Rafael Oliveira", email: "rafael.demo@email.com", date: "18/08/2026", total: 59.9, payment: "Pendente", status: "Aguardando", items: 1 },
-  { id: "FIS-1044", customer: "Beatriz Lima", email: "beatriz.demo@email.com", date: "17/08/2026", total: 98.9, payment: "Pago", status: "Entregue", items: 2 },
-  { id: "FIS-1043", customer: "André Martins", email: "andre.demo@email.com", date: "16/08/2026", total: 49.9, payment: "Pago", status: "Entregue", items: 1 }
+  { id: "FIS-1048", customer: "Mariana Costa", email: "mariana.demo@email.com", date: "19/08/2026", total: 109.7, payment: "Pago", status: "Em produção", items: 2, product: "Combo 12 Ímãs", photos: ["products/prod-combo12.jpg", "products/prod-single.jpg"] },
+  { id: "FIS-1047", customer: "Lucas Ribeiro", email: "lucas.demo@email.com", date: "19/08/2026", total: 74.8, payment: "Pago", status: "A enviar", items: 1, product: "Combo 8 Polaroid", photos: ["products/prod-polaroid.jpg"] },
+  { id: "FIS-1046", customer: "Camila Santos", email: "camila.demo@email.com", date: "18/08/2026", total: 169.8, payment: "Pago", status: "Enviado", items: 2, product: "Combo 24 Ímãs", photos: ["products/prod-combo24.jpg", "products/prod-combo6.jpg"] },
+  { id: "FIS-1045", customer: "Rafael Oliveira", email: "rafael.demo@email.com", date: "18/08/2026", total: 59.9, payment: "Pendente", status: "Aguardando", items: 1, product: "Magia & Bruxaria", photos: ["products/prod-harry.jpg"] },
+  { id: "FIS-1044", customer: "Beatriz Lima", email: "beatriz.demo@email.com", date: "17/08/2026", total: 98.9, payment: "Pago", status: "Entregue", items: 2, product: "Combo 6 Ímãs", photos: ["products/prod-combo6.jpg", "products/prod-polaroid.jpg"] },
+  { id: "FIS-1043", customer: "André Martins", email: "andre.demo@email.com", date: "16/08/2026", total: 49.9, payment: "Pago", status: "Entregue", items: 1, product: "Ímã Personalizado", photos: ["products/prod-single.jpg"] }
 ];
 
 export const visitorsByDay = [
@@ -39,8 +39,8 @@ export const visitorsByDay = [
 ];
 
 export const customers = [
-  { name: "Mariana Costa", email: "mariana.demo@email.com", phone: "(11) 99999-1048", orders: 3, spent: 289.4 },
-  { name: "Camila Santos", email: "camila.demo@email.com", phone: "(21) 98888-2046", orders: 2, spent: 239.7 },
-  { name: "Beatriz Lima", email: "beatriz.demo@email.com", phone: "(31) 97777-1044", orders: 2, spent: 158.8 },
-  { name: "Lucas Ribeiro", email: "lucas.demo@email.com", phone: "(41) 96666-1047", orders: 1, spent: 74.8 }
+  { name: "Mariana Costa", email: "mariana.demo@email.com", phone: "(11) 99999-1048", orders: 3, spent: 289.4, avatar: "products/prod-combo12.jpg" },
+  { name: "Camila Santos", email: "camila.demo@email.com", phone: "(21) 98888-2046", orders: 2, spent: 239.7, avatar: "products/prod-combo24.jpg" },
+  { name: "Beatriz Lima", email: "beatriz.demo@email.com", phone: "(31) 97777-1044", orders: 2, spent: 158.8, avatar: "products/prod-polaroid.jpg" },
+  { name: "Lucas Ribeiro", email: "lucas.demo@email.com", phone: "(41) 96666-1047", orders: 1, spent: 74.8, avatar: "products/prod-combo6.jpg" }
 ];
