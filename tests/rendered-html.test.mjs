@@ -75,7 +75,8 @@ test("opens the Foto Imas project with only its visual README", async () => {
   assert.match(page, /timeline-entry\[id\^=/);
   assert.match(page, /showProjectActions/);
   assert.match(page, /store-floating-actions/);
-  assert.match(page, /github\.com\/HumbertoFae\/humbertozizi/);
+  assert.match(page, /github\.com\/HumbertoFae\/foto-imas-store/);
+  assert.match(page, /ver código/);
   assert.match(page, /IntersectionObserver/);
   assert.match(page, /menuOffset/);
   assert.match(page, /scrollRoot\.scrollTo/);
