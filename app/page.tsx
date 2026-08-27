@@ -603,7 +603,7 @@ function StoreReadmePreview({ language, visibleSections }: { language: Language;
 
   return <article className="store-readme-preview">
     <header id="store-readme-intro" ref={heroRef} className={reveal("store-readme-intro", "store-readme-hero")}>
-      <div><span className="store-readme-kicker">README.md · PRODUCT CASE</span><h1>imas<em>Store</em></h1><p className="store-readme-hero-copy">{pt ? "Uma experiência completa para transformar fotografias em ímãs personalizados — da primeira escolha ao acompanhamento do pedido." : "A complete experience for turning photos into custom magnets — from the first choice to order tracking."}</p><div className="store-readme-actions"><a href={`${publicBasePath}/demos/foto-imas-store/index.html`} target="_blank" rel="noreferrer"><MonitorPlay aria-hidden="true" /><span>{pt ? "ver demonstração" : "view demo"}</span><ArrowUpRight aria-hidden="true" /></a><a href={`${publicBasePath}/demos/foto-imas-store/index.html#/dashboard`} target="_blank" rel="noreferrer"><LayoutDashboard aria-hidden="true" /><span>{pt ? "ver dashboard" : "view dashboard"}</span><ArrowUpRight aria-hidden="true" /></a></div></div>
+      <div><span className="store-readme-kicker">README.md · PRODUCT CASE</span><h1>imas<em>Store</em></h1><p className="store-readme-hero-copy">{pt ? "Uma experiência completa para transformar fotografias em ímãs personalizados — da primeira escolha ao acompanhamento do pedido." : "A complete experience for turning photos into custom magnets — from the first choice to order tracking."}</p><div className="store-readme-actions"><a href={`${publicBasePath}/demos/foto-imas-store/index.html`} target="_blank" rel="noreferrer"><MonitorPlay aria-hidden="true" /><span>{pt ? "ver demonstração" : "view demo"}</span><ArrowUpRight aria-hidden="true" /></a></div></div>
       <div className="store-readme-mosaic" aria-hidden="true">{Array.from({ length: 40 }, (_, index) => {
         const column = index % 8;
         const row = Math.floor(index / 8);
@@ -650,7 +650,7 @@ function StoreReadmePreview({ language, visibleSections }: { language: Language;
 
     <section id="store-readme-operation" className={reveal("store-readme-operation", "store-readme-operation")}>
       <div><span>03 / JAVASCRIPT · OPERAÇÃO</span><h2>{pt ? "Personalização, checkout e gestão compartilham o mesmo contexto." : "Customization, checkout, and management share the same context."}</h2><p>{pt ? "As interações preservam fotos, recortes e quantidades durante toda a compra. Depois da venda, o painel recebe exatamente o que a produção precisa para acompanhar cada pedido sem retrabalho." : "Interactions preserve photos, crops, and quantities throughout the purchase. After the sale, the dashboard receives exactly what production needs to track every order without rework."}</p><div className="store-readme-metrics"><span><b>48</b><small>{pt ? "pedidos" : "orders"}</small></span><span><b>3,8%</b><small>{pt ? "conversão" : "conversion"}</small></span><span><b>R$ 84</b><small>{pt ? "ticket médio" : "average order"}</small></span></div></div>
-      <figure className="store-dashboard-image-card"><header><span><i /><i /><i /></span><b>{pt ? "dashboard · visão geral" : "dashboard · overview"}</b><em>↗</em></header><div className="store-dashboard-image" role="img" aria-label={pt ? "Dashboard administrativo da Foto Ímãs Store" : "Foto Imas Store admin dashboard"} style={{ backgroundImage: `url(${publicBasePath}/demos/foto-imas-store/dashboard-presentation.png)` }} /><figcaption><span>{pt ? "PAINEL ADMINISTRATIVO" : "ADMIN DASHBOARD"}</span><p>{pt ? "Receita, pedidos, clientes, produtos e produção reunidos na visão operacional." : "Revenue, orders, customers, products, and production in one operational view."}</p></figcaption></figure>
+      <figure className="store-dashboard-image-card"><header><span><i /><i /><i /></span><b>{pt ? "dashboard · visão geral" : "dashboard · overview"}</b><em>↗</em></header><div className="store-dashboard-image" role="img" aria-label={pt ? "Dashboard administrativo da Foto Ímãs Store" : "Foto Imas Store admin dashboard"} style={{ backgroundImage: `url(${publicBasePath}/demos/foto-imas-store/dashboard-presentation.png)` }} /><figcaption><span>{pt ? "PAINEL ADMINISTRATIVO" : "ADMIN DASHBOARD"}</span><p>{pt ? "Receita, pedidos, clientes, produtos e produção reunidos na visão operacional." : "Revenue, orders, customers, products, and production in one operational view."}</p><a href={`${publicBasePath}/demos/foto-imas-store/index.html#/dashboard`} target="_blank" rel="noreferrer"><LayoutDashboard aria-hidden="true" /><b>{pt ? "ver dashboard" : "view dashboard"}</b><ArrowUpRight aria-hidden="true" /></a></figcaption></figure>
     </section>
 
     <section id="store-readme-result" className={reveal("store-readme-result", "store-readme-section store-readme-delivery")}>
@@ -672,7 +672,7 @@ function DiscountReadmePreview({ language, visibleSections }: { language: Langua
 
   return <article className="store-readme-preview discount-readme-preview">
     <header id="discount-readme-intro" className={reveal("discount-readme-intro", "store-readme-hero discount-readme-hero")}>
-      <div><span className="store-readme-kicker">README.md · PRODUCT CASE</span><h1>menor<em>Desconto</em></h1><p className="store-readme-hero-copy">{pt ? "Uma plataforma que transforma ofertas espalhadas em uma comparação clara, rastreável e útil para decidir melhor." : "A platform that turns scattered offers into a clear, traceable comparison for better decisions."}</p><div className="store-readme-actions"><a href={`${publicBasePath}/demos/menor-desconto/index.html`} target="_blank" rel="noreferrer"><MonitorPlay aria-hidden="true" /><span>{pt ? "ver demonstração" : "view demo"}</span><ArrowUpRight aria-hidden="true" /></a><a href={`${publicBasePath}/demos/menor-desconto/dashboard.html`} target="_blank" rel="noreferrer"><LayoutDashboard aria-hidden="true" /><span>{pt ? "ver dashboard" : "view dashboard"}</span><ArrowUpRight aria-hidden="true" /></a></div></div>
+      <div><span className="store-readme-kicker">README.md · PRODUCT CASE</span><h1>menor<em>Desconto</em></h1><p className="store-readme-hero-copy">{pt ? "Uma plataforma que transforma ofertas espalhadas em uma comparação clara, rastreável e útil para decidir melhor." : "A platform that turns scattered offers into a clear, traceable comparison for better decisions."}</p><div className="store-readme-actions"><a href={`${publicBasePath}/demos/menor-desconto/index.html`} target="_blank" rel="noreferrer"><MonitorPlay aria-hidden="true" /><span>{pt ? "ver demonstração" : "view demo"}</span><ArrowUpRight aria-hidden="true" /></a></div></div>
       <DiscountPuzzleMosaic />
     </header>
 
@@ -695,14 +695,14 @@ function DiscountReadmePreview({ language, visibleSections }: { language: Langua
 
     <section id="discount-readme-operation" className={reveal("discount-readme-operation", "store-readme-operation discount-readme-operation")}>
       <div><span>03 / TYPESCRIPT · INTELIGÊNCIA</span><h2>{pt ? "A comparação nasce de dados consistentes, não de uma etiqueta chamativa." : "Comparison starts with consistent data, not a flashy label."}</h2><p>{pt ? "A aplicação mantém produtos canônicos, ofertas por loja e pontos de histórico separados. A API organiza a consulta e o painel acompanha catálogo, integrações e disponibilidade." : "The application keeps canonical products, store offers, and price points separate. The API organizes queries while the dashboard tracks catalog, integrations, and availability."}</p><div className="store-readme-metrics"><span><b>12</b><small>{pt ? "lojas ilustrativas" : "sample stores"}</small></span><span><b>31%</b><small>{pt ? "economia simulada" : "sample savings"}</small></span><span><b>24h</b><small>{pt ? "histórico ativo" : "active history"}</small></span></div></div>
-      <figure className="store-dashboard-image-card discount-dashboard-image-card"><header><span><i /><i /><i /></span><b>{pt ? "dashboard · visão geral" : "dashboard · overview"}</b><em>↗</em></header><div className="store-dashboard-image" role="img" aria-label={pt ? "Dashboard administrativo do Menor Desconto" : "Menor Desconto admin dashboard"} style={{ backgroundImage: `url(${publicBasePath}/demos/menor-desconto/dashboard-presentation.jpg)` }} /><figcaption><span>{pt ? "PAINEL ADMINISTRATIVO" : "ADMIN DASHBOARD"}</span><p>{pt ? "Produtos, ofertas, lojas e histórico de preços reunidos na visão operacional." : "Products, offers, stores, and price history in one operational view."}</p></figcaption></figure>
+      <figure className="store-dashboard-image-card discount-dashboard-image-card"><header><span><i /><i /><i /></span><b>{pt ? "dashboard · visão geral" : "dashboard · overview"}</b><em>↗</em></header><div className="store-dashboard-image" role="img" aria-label={pt ? "Dashboard administrativo do Menor Desconto" : "Menor Desconto admin dashboard"} style={{ backgroundImage: `url(${publicBasePath}/demos/menor-desconto/dashboard-presentation.jpg)` }} /><figcaption><span>{pt ? "PAINEL ADMINISTRATIVO" : "ADMIN DASHBOARD"}</span><p>{pt ? "Produtos, ofertas, lojas e histórico de preços reunidos na visão operacional." : "Products, offers, stores, and price history in one operational view."}</p><a href={`${publicBasePath}/demos/menor-desconto/dashboard.html`} target="_blank" rel="noreferrer"><LayoutDashboard aria-hidden="true" /><b>{pt ? "ver dashboard" : "view dashboard"}</b><ArrowUpRight aria-hidden="true" /></a></figcaption></figure>
     </section>
 
     <section id="discount-readme-result" className={reveal("discount-readme-result", "store-readme-section store-readme-delivery")}>
       <header><span>04</span><div><small>{pt ? "NODE.JS · OPERAÇÃO E ENTREGA" : "NODE.JS · OPERATIONS AND DELIVERY"}</small><h2>{pt ? "Publicar uma experiência rápida e uma operação previsível." : "Ship a fast experience with predictable operations."}</h2></div></header>
       <p>{pt ? "A entrega conecta o frontend React à API Node, persistência local do servidor e painel protegido. Saúde, manutenção e recuperação continuam disponíveis sem expor a operação ao visitante." : "The delivery connects the React frontend to the Node API, server-side persistence, and a protected dashboard. Health, maintenance, and recovery remain available without exposing operations to visitors."}</p>
       <div className="store-readme-challenges"><article><span>01</span><div><strong>{pt ? "Comparação justa" : "Fair comparison"}</strong><p>{pt ? "Frete, condição e atualização evitam um falso menor preço." : "Shipping, condition, and update time prevent a false lowest price."}</p></div></article><article><span>02</span><div><strong>{pt ? "Saída transparente" : "Transparent handoff"}</strong><p>{pt ? "O usuário confirma a loja antes de sair do comparador." : "The user confirms the store before leaving the service."}</p></div></article><article><span>03</span><div><strong>{pt ? "Operação resiliente" : "Resilient operations"}</strong><p>{pt ? "API de saúde, modo de manutenção e dados persistentes apoiam a publicação." : "Health API, maintenance mode, and persistent data support deployment."}</p></div></article></div>
-      <div className="store-readme-stack-list"><b>React</b><b>TypeScript</b><b>Vite</b><b>Node.js</b><b>PGlite</b><b>aaPanel</b></div>
+      <div className="store-readme-stack-list"><b>React</b><b>TypeScript</b><b>Vite</b><b>Node.js</b><b>PGlite</b><b>GitHub Pages</b></div>
       <footer className="store-readme-footer"><span><CircleCheckBig aria-hidden="true" /></span><div><small>{pt ? "RESULTADO" : "RESULT"}</small><strong>{pt ? "Um comparador completo, responsivo e pronto para operação, conectando descoberta, decisão e acompanhamento." : "A complete responsive comparison service ready for operations, connecting discovery, decision, and tracking."}</strong></div><a href="https://github.com/HumbertoFae/menor-desconto" target="_blank" rel="noreferrer"><FaGithub aria-hidden="true" />{pt ? "ver no GitHub" : "view on GitHub"}</a></footer>
     </section>
   </article>;
@@ -772,10 +772,55 @@ function StoreCodeWorkspace({ language, visual }: { language: Language; visual: 
       <div className="store-readme-nav-items">{readmeSteps.map(([id, label], index) => <button className={activeReadmeSection === id ? "is-active" : index < activeReadmeIndex ? "is-passed" : ""} type="button" key={id} aria-label={`${String(index + 1).padStart(2, "0")} — ${label}`} onClick={() => goToReadmeSection(id)}><span className="store-nav-copy"><b>{String(index + 1).padStart(2, "0")}</b><em>{label}</em></span></button>)}</div>
     </aside>
     <main className="store-code-editor">
-      {showProjectActions && <nav className="store-floating-actions" aria-label={language === "pt" ? "Links do projeto" : "Project links"}><a href={`${publicBasePath}/demos/${visual === "store" ? "foto-imas-store" : "menor-desconto"}/index.html`} target="_blank" rel="noreferrer"><MonitorPlay aria-hidden="true" /><span>{language === "pt" ? "ver demonstração" : "view demo"}</span><ArrowUpRight aria-hidden="true" /></a><a href={visual === "store" ? `${publicBasePath}/demos/foto-imas-store/index.html#/dashboard` : `${publicBasePath}/demos/menor-desconto/dashboard.html`} target="_blank" rel="noreferrer"><LayoutDashboard aria-hidden="true" /><span>{language === "pt" ? "ver dashboard" : "view dashboard"}</span><ArrowUpRight aria-hidden="true" /></a></nav>}
+      {showProjectActions && <nav className="store-floating-actions" aria-label={language === "pt" ? "Links do projeto" : "Project links"}><a href={`${publicBasePath}/demos/${visual === "store" ? "foto-imas-store" : "menor-desconto"}/index.html`} target="_blank" rel="noreferrer"><MonitorPlay aria-hidden="true" /><span>{language === "pt" ? "ver demonstração" : "view demo"}</span><ArrowUpRight aria-hidden="true" /></a></nav>}
       <div className="store-code-document is-readme" aria-label="README.md — Markdown">{visual === "store" ? <StoreReadmePreview language={language} visibleSections={visibleReadmeSections} /> : <DiscountReadmePreview language={language} visibleSections={visibleReadmeSections} />}</div>
       <footer className="store-code-status"><span>⑂ main</span><span>README.md</span><span>Markdown</span><span>UTF-8</span></footer>
     </main>
+  </div>;
+}
+
+function HistoryTypingConsole({ text }: { text: string }) {
+  const consoleRef = useRef<HTMLDivElement>(null);
+  const [typedText, setTypedText] = useState("");
+
+  useEffect(() => {
+    const element = consoleRef.current;
+    if (!element) return;
+    let typingTimer = 0;
+    let characterIndex = 0;
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    const startTyping = () => {
+      if (reducedMotion) {
+        setTypedText(text);
+        return;
+      }
+      setTypedText("");
+      typingTimer = window.setInterval(() => {
+        characterIndex += 1;
+        setTypedText(text.slice(0, characterIndex));
+        if (characterIndex >= text.length) window.clearInterval(typingTimer);
+      }, 24);
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+      if (!entries[0]?.isIntersecting) return;
+      observer.disconnect();
+      startTyping();
+    }, { threshold: 0.45 });
+    observer.observe(element);
+
+    return () => {
+      observer.disconnect();
+      window.clearInterval(typingTimer);
+    };
+  }, [text]);
+
+  const complete = typedText.length === text.length;
+  return <div ref={consoleRef} className="history-console" role="status" aria-label={text}>
+    <div className="history-console-bar"><span><i /><i /><i /></span><code>commit_history.console</code><em>{complete ? "done" : "typing"}</em></div>
+    <div className="history-console-body" aria-hidden="true"><span>›</span><p>{typedText}<i /></p></div>
+    <div className="history-console-status" aria-hidden="true"><span>stdout · narrative</span><b>{String(typedText.length).padStart(3, "0")}/{String(text.length).padStart(3, "0")}</b></div>
   </div>;
 }
 
@@ -1875,7 +1920,7 @@ export default function Home() {
                 <p className="eyebrow"><span>$</span> git log --projects</p>
                 <h2>{t.history}</h2>
               </div>
-              <p>{t.historyDescription}</p>
+              <HistoryTypingConsole text={t.historyDescription} />
             </div>
 
             <div className="timeline-wrap">
