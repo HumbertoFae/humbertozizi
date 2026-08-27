@@ -1,4 +1,4 @@
-# zzBiography
+# humberto-zizi-portfolio
 
 Portfólio pessoal de Humberto Zizi que apresenta projetos, experiências digitais, sites, aplicativos e ferramentas em uma interface inspirada em ambiente de desenvolvimento.
 
@@ -34,7 +34,7 @@ O portfólio transforma a apresentação profissional em uma experiência intera
 ## Arquitetura
 
 ```text
-zzBiography/
+humberto-zizi-portfolio/
 ├── app/
 │   ├── page.tsx           # experiência principal e interações
 │   ├── layout.tsx         # metadados e estrutura global
