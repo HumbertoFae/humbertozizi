@@ -66,6 +66,8 @@ test("opens the Foto Imas project with only its visual README", async () => {
   assert.match(page, /store-readme-browser-showcase/);
   assert.match(page, /site-presentation-clean\.png/);
   assert.match(page, /store-readme-operation/);
+  assert.match(page, /dashboard-presentation\.png/);
+  assert.match(page, /store-dashboard-image-card/);
   assert.match(page, /store-readme-experience/);
   assert.match(page, /Jornada do cliente/);
   assert.match(page, /Recursos que sustentam a jornada/);
@@ -76,14 +78,26 @@ test("opens the Foto Imas project with only its visual README", async () => {
   assert.match(page, /showProjectActions/);
   assert.match(page, /store-floating-actions/);
   assert.match(page, /github\.com\/HumbertoFae\/foto-imas-store/);
+  assert.match(page, /github\.com\/HumbertoFae\/menor-desconto/);
+  assert.doesNotMatch(page, /abrir projeto" : "open project/);
   assert.doesNotMatch(page, /ver código/);
   assert.match(page, /foto-imas-store\/index\.html#\/dashboard/);
   assert.match(page, /ver dashboard/);
-  assert.match(page, /project-quick-links/);
-  assert.match(page, /abrir dashboard/);
+  assert.match(page, /foto-imas-store\/index\.html[\s\S]*?<MonitorPlay[\s\S]*?foto-imas-store\/index\.html#\/dashboard[\s\S]*?<LayoutDashboard/);
+  assert.match(page, /menor-desconto\/dashboard\.html/);
+  assert.doesNotMatch(page, /https:\/\/menordesconto\.com\.br\/admin/);
+  assert.match(page, /menor-desconto\/dashboard-presentation\.jpg/);
+  assert.match(page, /discount-dashboard-image-card/);
+  assert.doesNotMatch(page, /discount-comparison-card/);
+  assert.match(page, /MonitorPlay/);
+  assert.match(page, /className="store-floating-actions"[\s\S]*?<MonitorPlay[\s\S]*?<LayoutDashboard/);
+  assert.doesNotMatch(page, /visual === "store" \? "https:\/\/fotoimasstore\.com\.br\/"/);
+  assert.doesNotMatch(page, /project-quick-links/);
+  assert.doesNotMatch(page, /abrir dashboard/);
   assert.match(page, /IntersectionObserver/);
   assert.match(page, /menuOffset/);
   assert.match(page, /scrollRoot\.scrollTo/);
+  assert.match(page, /Math\.max\(0, targetTop\), behavior: "auto"/);
   assert.match(page, /store-readme-nav/);
   assert.match(page, /store-readme-nav-items/);
   assert.match(page, /store-nav-copy/);
@@ -198,9 +212,10 @@ test("embeds the safe fictional Foto Imas Store demo", async () => {
 });
 
 test("embeds the safe fictional Menor Desconto demo", async () => {
-  const [page, demo] = await Promise.all([
+  const [page, demo, dashboard] = await Promise.all([
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../public/demos/menor-desconto/index.html", import.meta.url), "utf8"),
+    readFile(new URL("../public/demos/menor-desconto/dashboard.html", import.meta.url), "utf8"),
   ]);
   const entry = demo.match(/src="\/demos\/menor-desconto\/(assets\/index-[^"]+\.js)"/)?.[1];
   assert.ok(entry);
@@ -208,6 +223,7 @@ test("embeds the safe fictional Menor Desconto demo", async () => {
 
   assert.match(page, /visual: "discount"/);
   assert.match(page, /demos\/menor-desconto\/index\.html/);
+  assert.match(page, /demos\/menor-desconto\/dashboard\.html/);
   assert.match(page, /https:\/\/menordesconto\.com\.br\//);
   assert.match(page, /Pesquisa e regras do produto/);
   assert.match(page, /Conteúdo, SEO e operação/);
@@ -215,6 +231,13 @@ test("embeds the safe fictional Menor Desconto demo", async () => {
   assert.match(script, /Preço menor\. Desconto de verdade\./);
   assert.match(script, /DEMO_OFFLINE/);
   assert.doesNotMatch(`${demo}\n${script}`, /ADMIN_PASSWORD|DATABASE_URL|process\.env/);
+  assert.match(dashboard, /Dashboard demonstrativo \| menordesconto/);
+  assert.match(dashboard, /Ambiente demonstrativo/);
+  assert.match(dashboard, /todos os números, produtos, lojas e atividades abaixo são fictícios/);
+  assert.match(dashboard, /data-panel="overview"/);
+  assert.match(dashboard, /data-panel="catalog"/);
+  assert.match(dashboard, /data-panel="offers"/);
+  assert.doesNotMatch(dashboard, /fetch\(|\/api\/|ADMIN_PASSWORD|DATABASE_URL|login/i);
 });
 
 test("removes all disposable starter preview code", async () => {
